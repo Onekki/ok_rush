@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -22,77 +21,75 @@ class _StarArkAuthPageState extends AuthRequiredState<StarArkAuthPage> {
   static const url = "https://$domain/";
 
   final cookieManager = WebviewCookieManager();
-  final Completer<WebViewController> _controller = Completer();
+  WebViewController? _controller;
 
-  int _index = 1;
+  bool _isLoading = true;
   String? _token;
   String? _cookie;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("StarArkAuth"),
-        actions: [
-          _index == 1 ? const SizedBox.shrink() :
-          IconButton(
-              onPressed: () async {
-                _cookie = null;
-                await cookieManager.clearCookies();
-                context.showSnackBar(message: "cookie cleared");
-              },
-              icon: const Icon(Icons.clear_all)
-          ),
-          _index == 1 ? const SizedBox.shrink() :
-          IconButton(
-              onPressed: () async {
-                _updateTokenAndCookie();
-                if (_cookie != null) {
-                  context.showSnackBar(message: _cookie!);
-                } else {
-                  context.showErrorSnackBar(message: "cookie get failed");
-                }
-              },
-              icon: const Icon(Icons.remove_red_eye)
-          ),
-          _index == 1 ? const SizedBox.shrink() :
-          IconButton(
-              onPressed: () async {
-                _updateTokenAndCookie();
-                if (_cookie != null) {
-                  Navigator.of(context).pop([_token, _cookie!]);
-                } else {
-                  context.showErrorSnackBar(message: "cookie get failed");
-                }
-              },
-              icon: const Icon(Icons.check)
-          ),
+        appBar: AppBar(
+          title: const Text("StarArkAuth"),
+          actions: [
+            _isLoading
+                ? const SizedBox.shrink()
+                : IconButton(
+                    onPressed: () async {
+                      _cookie = null;
+                      await cookieManager.clearCookies();
+                      context.showSnackBar(message: "cookie cleared");
+                    },
+                    icon: const Icon(Icons.clear_all)),
+            _isLoading
+                ? const SizedBox.shrink()
+                : IconButton(
+                    onPressed: () {
+                      _controller?.reload();
+                    },
+                    icon: const Icon(Icons.refresh)),
+            _isLoading
+                ? const SizedBox.shrink()
+                : IconButton(
+                    onPressed: () async {
+                      _updateTokenAndCookie();
+                      if (_cookie != null) {
+                        Navigator.of(context).pop([_token, _cookie!]);
+                      } else {
+                        context.showErrorSnackBar(message: "cookie get failed");
+                      }
+                    },
+                    icon: const Icon(Icons.check)),
         ],
       ),
-      body: IndexedStack(
-        index: _index,
-        children: [
-          WebViewWidget(
-            url: url,
-            domain: domain,
-            cookie: null,
-            onWebViewCreated: (controller) {
-              _controller.complete(controller);
-            },
-            onPageStarted: (url) {
-              setState(() {
-                _index = 1;
-              });
-            },
-            onPageFinished: (url) async {
-              setState(() {
-                _index = 0;
-              });
-              _updateTokenAndCookie();
-            },
-          ),
-          const Center(child: CircularProgressIndicator(),),
-        ],
+        body: Stack(
+          children: [
+            WebViewWidget(
+              url: url,
+              domain: domain,
+              cookie: null,
+              onWebViewCreated: (controller) {
+                _controller = controller;
+              },
+              onPageStarted: (url) {
+                setState(() {
+                  _isLoading = true;
+                });
+              },
+              onPageFinished: (url) async {
+                setState(() {
+                  _isLoading = false;
+                });
+                _updateTokenAndCookie();
+              },
+            ),
+            _isLoading
+                ? const Center(
+                    child: CircularProgressIndicator(),
+                  )
+                : const SizedBox.shrink()
+          ],
       )
     );
   }
