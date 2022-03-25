@@ -21,6 +21,7 @@ class _StarArkAuthPageState extends AuthRequiredState<StarArkAuthPage> {
 
   final cookieManager = WebviewCookieManager();
 
+  String? _id;
   String? _token;
   String? _cookie;
 
@@ -40,11 +41,8 @@ class _StarArkAuthPageState extends AuthRequiredState<StarArkAuthPage> {
             IconButton(
                 onPressed: () async {
                   _updateTokenAndCookie();
-                  if (_cookie != null) {
-                    Navigator.of(context).pop([_token, _cookie!]);
-                  } else {
-                    context.showErrorSnackBar(message: "cookie get failed");
-                  }
+                  Navigator.of(context)
+                      .pop([_id ?? "", _token ?? "", _cookie ?? ""]);
                 },
                 icon: const Icon(Icons.check)),
           ],
@@ -55,7 +53,16 @@ class _StarArkAuthPageState extends AuthRequiredState<StarArkAuthPage> {
               url: url,
               domain: domain,
               cookie: null,
+              onPageStarted: (url) {
+                try {
+                  String queryString = url.split("?")[1];
+                  final queryParameters = Uri.splitQueryString(queryString);
+                  _id = queryParameters["id"];
+                  debugPrint("id=$_id");
+                } catch (e) {}
+              },
               onPageFinished: (url) async {
+                debugPrint(url);
                 _updateTokenAndCookie();
               },
             ),
@@ -72,7 +79,7 @@ class _StarArkAuthPageState extends AuthRequiredState<StarArkAuthPage> {
           final value = Uri.decodeComponent(e.value);
           final user = jsonDecode(value);
           _token = user["login_token"];
-          debugPrint(_token);
+          debugPrint("token=$_token");
         } catch (e) { }
       }
       return "${e.name}=${e.value}";

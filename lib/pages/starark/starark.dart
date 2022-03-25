@@ -4,11 +4,11 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:ok_rush/components/auth_required_state.dart';
-import 'package:ok_rush/utils/rusher.dart';
+import 'package:ok_rush/pages/base/base_rush.dart';
 import 'package:ok_rush/pages/starark/captcha_netease.dart';
 import 'package:ok_rush/pages/starark/starark_rush.dart';
 import 'package:ok_rush/utils/constants.dart';
-import 'package:ok_rush/pages/base/base_rush.dart';
+import 'package:ok_rush/utils/rusher.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 class StarArkPage extends StatefulWidget {
@@ -24,20 +24,25 @@ class _StarArkPageState extends AuthRequiredState<StarArkPage> {
 
   StarArkCategory _category = StarArkCategory.box;
   RushState _rushState = RushState.none;
+
   set setRushState(rushState) {
     _rushState = rushState;
   }
 
-  final Map<StarArkCategory, Map<String, TextEditingController>> _presetsControllerMapMap = {};
-  final Map<StarArkCategory, List<TextEditingController>> _presetsControllerListMap = {};
+  final Map<StarArkCategory, Map<String, TextEditingController>>
+      _presetsControllerMapMap = {};
+  final Map<StarArkCategory, List<TextEditingController>>
+      _presetsControllerListMap = {};
   final Map<StarArkCategory, List<String>> _presetsControllerKeyListMap = {};
 
   String get _rushStateMessage =>
       categoryMap[_category]![CategoryProperty.rushState][_rushState]
           [RushStateProperty.message];
+
   String? get _rushStateEndpoint =>
       categoryMap[_category]![CategoryProperty.rushState][_rushState]
           [RushStateProperty.endpoint];
+
   Map<String, dynamic>? get _rushStateParser =>
       categoryMap[_category]![CategoryProperty.rushState][_rushState]
           [RushStateProperty.parser];
@@ -77,7 +82,8 @@ class _StarArkPageState extends AuthRequiredState<StarArkPage> {
           final textEditingController = TextEditingController();
           _presetsControllerKeyListMap[category]?.add(key);
           _presetsControllerListMap[category]?.add(textEditingController);
-          _presetsControllerMapMap[category]?.putIfAbsent(key, () => textEditingController);
+          _presetsControllerMapMap[category]
+              ?.putIfAbsent(key, () => textEditingController);
         }
       });
     });
@@ -92,7 +98,9 @@ class _StarArkPageState extends AuthRequiredState<StarArkPage> {
   void dispose() {
     _rusher.dispose();
     _presetsControllerListMap.forEach((key, value) {
-      for (var element in value) { element.dispose(); }
+      for (var element in value) {
+        element.dispose();
+      }
     });
     _cookieController.dispose();
     _sleepMinController.dispose();
@@ -166,8 +174,8 @@ class _StarArkPageState extends AuthRequiredState<StarArkPage> {
                                 value: StarArkCategory.product,
                               ),
                               DropdownMenuItem(
-                                child: Text(categoryMap[StarArkCategory
-                                    .goods]![CategoryProperty.name]!),
+                                child: Text(categoryMap[StarArkCategory.goods]![
+                                    CategoryProperty.name]!),
                                 value: StarArkCategory.goods,
                               ),
                             ],
@@ -308,7 +316,6 @@ class _StarArkPageState extends AuthRequiredState<StarArkPage> {
         _rushState = RushState.cancel;
       });
     } else {
-
       if (_controller == null) {
         context.showErrorSnackBar(message: "网页尚未加载完毕");
         return;
@@ -520,9 +527,11 @@ class _StarArkPageState extends AuthRequiredState<StarArkPage> {
                         physics: const NeverScrollableScrollPhysics(),
                         itemCount: _presetsControllerListMap[_category]!.length,
                         itemBuilder: (context, index) {
-                          final key = _presetsControllerKeyListMap[_category]![index];
+                          final key =
+                              _presetsControllerKeyListMap[_category]![index];
                           return TextFormField(
-                            controller: _presetsControllerListMap[_category]![index],
+                            controller:
+                                _presetsControllerListMap[_category]![index],
                             textInputAction: TextInputAction.next,
                             decoration: InputDecoration(
                                 labelText: key, hintText: '输入$key'),
@@ -555,11 +564,17 @@ class _StarArkPageState extends AuthRequiredState<StarArkPage> {
                               final result = await Navigator.of(context)
                                   .pushNamed('/starark_auth');
                               if (result is List) {
-                                final token = result[0];
-                                final cookie = result[1];
+                                final id = result[0];
+                                final token = result[1];
+                                final cookie = result[2];
+                                if (id is String) {
+                                  _presetsControllerMapMap[_category]!["id"]!
+                                      .text = id;
+                                }
                                 if (token is String) {
-                                  _presetsControllerMapMap[_category]!["login_token"]!.text =
-                                      token;
+                                  _presetsControllerMapMap[_category]![
+                                          "login_token"]!
+                                      .text = token;
                                 }
                                 if (cookie is String) {
                                   _cookieController.text = cookie;
