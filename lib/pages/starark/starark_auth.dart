@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:ok_rush/components/auth_required_state.dart';
 import 'package:ok_rush/pages/web/web_view.dart';
 import 'package:ok_rush/utils/constants.dart';
 import 'package:webview_cookie_manager/webview_cookie_manager.dart';
@@ -17,8 +17,7 @@ class StarArkAuthPage extends StatefulWidget {
   }
 }
 
-class _StarArkAuthPageState extends State<StarArkAuthPage> {
-
+class _StarArkAuthPageState extends AuthRequiredState<StarArkAuthPage> {
   static const domain = "h5.stararknft.art";
   static const url = "https://$domain/";
 
