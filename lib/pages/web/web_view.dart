@@ -8,6 +8,7 @@ import 'package:webview_flutter/webview_flutter.dart';
 class WebViewWidget extends StatefulWidget {
   const WebViewWidget(
       {Key? key,
+      this.showNav = true,
       required this.url,
       required this.domain,
       required this.cookie,
@@ -18,6 +19,7 @@ class WebViewWidget extends StatefulWidget {
       this.onJioCallback})
       : super(key: key);
 
+  final bool showNav;
   final String domain;
   final String? cookie;
   final String url;
@@ -114,9 +116,8 @@ class _WebViewWidgetState extends State<WebViewWidget> {
               },
               backgroundColor: const Color(0x00ffffff),
             )),
-            _controller == null
-                ? const SizedBox.shrink()
-                : Row(
+            _controller != null && widget.showNav
+                ? Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       IconButton(
@@ -151,7 +152,8 @@ class _WebViewWidgetState extends State<WebViewWidget> {
                         icon: const Icon(Icons.arrow_forward_ios),
                       )
                     ],
-                  ),
+                  )
+                : const SizedBox.shrink()
           ],
         ),
         _isLoading

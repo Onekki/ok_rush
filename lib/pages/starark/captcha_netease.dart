@@ -35,6 +35,7 @@ class CaptchaWidgetState extends State<CaptchaWidget> {
         child: AspectRatio(
           aspectRatio: 320.0 / 320.0,
           child: WebViewWidget(
+            showNav: false,
             url: "assets/www/starark/index.html",
             domain: "h5.stararknft.art",
             cookie: widget.cookie,
