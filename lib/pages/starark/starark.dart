@@ -523,66 +523,38 @@ class _StarArkPageState extends AuthRequiredState<StarArkPage> {
                 child: ListBody(
                   children: [
                     ListView.builder(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemCount: _presetsControllerListMap[_category]!.length,
-                        itemBuilder: (context, index) {
-                          final key =
-                              _presetsControllerKeyListMap[_category]![index];
-                          return TextFormField(
-                            controller:
-                                _presetsControllerListMap[_category]![index],
-                            textInputAction: TextInputAction.next,
-                            decoration: InputDecoration(
-                                labelText: key, hintText: '输入$key'),
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return '请输入$key';
-                              }
-                              return null;
-                            },
-                          );
-                        }),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: TextFormField(
-                            controller: _cookieController,
-                            textInputAction: TextInputAction.next,
-                            decoration: const InputDecoration(
-                                labelText: 'cookie', hintText: '输入cookie'),
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return '请输入cookie';
-                              }
-                              return null;
-                            },
-                          ),
-                        ),
-                        IconButton(
-                            onPressed: () async {
-                              final result = await Navigator.of(context)
-                                  .pushNamed('/starark_auth');
-                              if (result is List) {
-                                final id = result[0];
-                                final token = result[1];
-                                final cookie = result[2];
-                                if (id is String) {
-                                  _presetsControllerMapMap[_category]!["id"]!
-                                      .text = id;
-                                }
-                                if (token is String) {
-                                  _presetsControllerMapMap[_category]![
-                                          "login_token"]!
-                                      .text = token;
-                                }
-                                if (cookie is String) {
-                                  _cookieController.text = cookie;
-                                }
-                              }
-                            },
-                            icon: const Icon(Icons.explore)),
-                      ],
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: _presetsControllerListMap[_category]!.length,
+                      itemBuilder: (context, index) {
+                        final key =
+                            _presetsControllerKeyListMap[_category]![index];
+                        return TextFormField(
+                          controller:
+                              _presetsControllerListMap[_category]![index],
+                          textInputAction: TextInputAction.next,
+                          decoration: InputDecoration(
+                              labelText: key, hintText: '输入$key'),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return '请输入$key';
+                            }
+                            return null;
+                          },
+                        );
+                      },
+                    ),
+                    TextFormField(
+                      controller: _cookieController,
+                      textInputAction: TextInputAction.next,
+                      decoration: const InputDecoration(
+                          labelText: 'cookie', hintText: '输入cookie'),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return '请输入cookie';
+                        }
+                        return null;
+                      },
                     ),
                     TextFormField(
                       controller: _sleepMinController,
@@ -623,9 +595,25 @@ class _StarArkPageState extends AuthRequiredState<StarArkPage> {
           ),
           actions: <Widget>[
             TextButton(
-              child: const Text('取消'),
-              onPressed: () {
-                Navigator.of(context).pop();
+              child: const Text('浏览器'),
+              onPressed: () async {
+                final result =
+                    await Navigator.of(context).pushNamed('/starark_auth');
+                if (result is List) {
+                  final id = result[0];
+                  final token = result[1];
+                  final cookie = result[2];
+                  if (id is String) {
+                    _presetsControllerMapMap[_category]!["id"]!.text = id;
+                  }
+                  if (token is String) {
+                    _presetsControllerMapMap[_category]!["login_token"]!.text =
+                        token;
+                  }
+                  if (cookie is String) {
+                    _cookieController.text = cookie;
+                  }
+                }
               },
             ),
             TextButton(
