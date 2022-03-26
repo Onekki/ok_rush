@@ -96,9 +96,16 @@ Map<RushState, dynamic> rushStateBox = {
   RushState.payOrder: {
     RushStateProperty.message: "正在购买",
     RushStateProperty.endpoint: "/api/Pay/direct_buy_box",
-    RushStateProperty.query: ["id", "login_token", "token_id", "money", "password", "NECaptchaValidate"],
+    RushStateProperty.query: [
+      "id",
+      "login_token",
+      "token_id",
+      "money",
+      "password",
+      "NECaptchaValidate"
+    ],
   },
-  RushState.done: {RushStateProperty.message: "已结束"},
+  RushState.done: {RushStateProperty.message: "已停止"},
   RushState.cancel: {RushStateProperty.message: "已取消"}
 };
 
@@ -131,9 +138,16 @@ Map<RushState, dynamic> rushStateProduct = {
   RushState.payOrder: {
     RushStateProperty.message: "正在购买",
     RushStateProperty.endpoint: "/api/Pay/direct_buy",
-    RushStateProperty.query: ["id", "login_token", "token_id", "money", "password", "NECaptchaValidate"],
+    RushStateProperty.query: [
+      "id",
+      "login_token",
+      "token_id",
+      "money",
+      "password",
+      "NECaptchaValidate"
+    ],
   },
-  RushState.done: {RushStateProperty.message: "已结束"},
+  RushState.done: {RushStateProperty.message: "已停止"},
   RushState.cancel: {RushStateProperty.message: "已取消"}
 };
 
@@ -165,9 +179,14 @@ Map<RushState, dynamic> rushStateGoods= {
   RushState.payOrder: {
     RushStateProperty.message: "正在购买",
     RushStateProperty.endpoint: "/api/Pay/direct_buy_er",
-    RushStateProperty.query: ["goods_id", "login_token", "password", "NECaptchaValidate"]
+    RushStateProperty.query: [
+      "goods_id",
+      "login_token",
+      "password",
+      "NECaptchaValidate"
+    ]
   },
-  RushState.done: {RushStateProperty.message: "已结束"},
+  RushState.done: {RushStateProperty.message: "已停止"},
   RushState.cancel: {RushStateProperty.message: "已取消"}
 };
 
