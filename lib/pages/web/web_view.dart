@@ -50,118 +50,120 @@ class _WebViewWidgetState extends State<WebViewWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        Column(
-          children: [
-            Expanded(
-                child: WebView(
-              debuggingEnabled: kDebugMode,
-              javascriptMode: JavascriptMode.unrestricted,
-              onWebViewCreated: (WebViewController webViewController) async {
-                debugPrint("onWebViewCreated");
-                if (widget.cookie != null) {
-                  final cookieMap = Uri.splitQueryString(widget.cookie!);
-                  final cookieManager = CookieManager();
+    return SafeArea(
+      child: Stack(
+        children: [
+          Column(
+            children: [
+              Expanded(
+                  child: WebView(
+                debuggingEnabled: kDebugMode,
+                javascriptMode: JavascriptMode.unrestricted,
+                onWebViewCreated: (WebViewController webViewController) async {
+                  debugPrint("onWebViewCreated");
+                  if (widget.cookie != null) {
+                    final cookieMap = Uri.splitQueryString(widget.cookie!);
+                    final cookieManager = CookieManager();
 
-                  cookieMap.forEach((key, value) async {
-                    cookieManager.setCookie(
-                      WebViewCookie(
-                          name: key, value: value, domain: widget.domain),
-                    );
+                    cookieMap.forEach((key, value) async {
+                      cookieManager.setCookie(
+                        WebViewCookie(
+                            name: key, value: value, domain: widget.domain),
+                      );
+                    });
+                  }
+                  if (widget.url.startsWith("assets")) {
+                    await webViewController.loadFlutterAsset(widget.url);
+                  } else {
+                    await webViewController.loadUrl(widget.url);
+                  }
+                  _controller = webViewController;
+                  if (widget.onWebViewCreated != null) {
+                    widget.onWebViewCreated!(webViewController);
+                  }
+                },
+                onProgress: (int progress) {
+                  debugPrint('WebView is loading (progress : $progress%)');
+                  if (widget.onProgress != null) {
+                    widget.onProgress!(progress);
+                  }
+                },
+                javascriptChannels: <JavascriptChannel>{
+                  JavascriptChannel(
+                      name: "Jio",
+                      onMessageReceived: (message) {
+                        if (widget.onJioCallback != null) {
+                          widget.onJioCallback!(message.message);
+                        }
+                      })
+                },
+                onPageStarted: (String url) async {
+                  debugPrint('Page started loading: $url');
+                  setState(() {
+                    _isLoading = true;
                   });
-                }
-                if (widget.url.startsWith("assets")) {
-                  await webViewController.loadFlutterAsset(widget.url);
-                } else {
-                  await webViewController.loadUrl(widget.url);
-                }
-                _controller = webViewController;
-                if (widget.onWebViewCreated != null) {
-                  widget.onWebViewCreated!(webViewController);
-                }
-              },
-              onProgress: (int progress) {
-                debugPrint('WebView is loading (progress : $progress%)');
-                if (widget.onProgress != null) {
-                  widget.onProgress!(progress);
-                }
-              },
-              javascriptChannels: <JavascriptChannel>{
-                JavascriptChannel(
-                    name: "Jio",
-                    onMessageReceived: (message) {
-                      if (widget.onJioCallback != null) {
-                        widget.onJioCallback!(message.message);
-                      }
-                    })
-              },
-              onPageStarted: (String url) async {
-                debugPrint('Page started loading: $url');
-                setState(() {
-                  _isLoading = true;
-                });
-                if (widget.onPageStarted != null) {
-                  widget.onPageStarted!(url);
-                }
-              },
-              onPageFinished: (String url) async {
-                debugPrint('Page finished loading: $url');
-                setState(() {
-                  _isLoading = false;
-                });
-                if (widget.onPageFinished != null) {
-                  widget.onPageFinished!(url);
-                }
-              },
-              backgroundColor: const Color(0x00ffffff),
-            )),
-            _controller != null && widget.showNav
-                ? Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      IconButton(
-                        onPressed: () async {
-                          if (_controller != null) {
-                            final canGoBack = await _controller!.canGoBack();
-                            if (canGoBack) {
-                              _controller!.goBack();
+                  if (widget.onPageStarted != null) {
+                    widget.onPageStarted!(url);
+                  }
+                },
+                onPageFinished: (String url) async {
+                  debugPrint('Page finished loading: $url');
+                  setState(() {
+                    _isLoading = false;
+                  });
+                  if (widget.onPageFinished != null) {
+                    widget.onPageFinished!(url);
+                  }
+                },
+                backgroundColor: const Color(0x00ffffff),
+              )),
+              _controller != null && widget.showNav
+                  ? Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        IconButton(
+                          onPressed: () async {
+                            if (_controller != null) {
+                              final canGoBack = await _controller!.canGoBack();
+                              if (canGoBack) {
+                                _controller!.goBack();
+                              }
                             }
-                          }
-                        },
-                        icon: const Icon(Icons.arrow_back_ios),
-                      ),
-                      IconButton(
-                        onPressed: () async {
-                          if (_controller != null) {
-                            _controller!.reload();
-                          }
-                        },
-                        icon: const Icon(Icons.refresh),
-                      ),
-                      IconButton(
-                        onPressed: () async {
-                          if (_controller != null) {
-                            final _canGoForward =
-                                await _controller!.canGoForward();
-                            if (_canGoForward) {
-                              _controller!.goForward();
+                          },
+                          icon: const Icon(Icons.arrow_back_ios),
+                        ),
+                        IconButton(
+                          onPressed: () async {
+                            if (_controller != null) {
+                              _controller!.reload();
                             }
-                          }
-                        },
-                        icon: const Icon(Icons.arrow_forward_ios),
-                      )
-                    ],
-                  )
-                : const SizedBox.shrink()
-          ],
-        ),
-        _isLoading
-            ? const Center(
-                child: CircularProgressIndicator(),
-              )
-            : const SizedBox.shrink()
-      ],
+                          },
+                          icon: const Icon(Icons.refresh),
+                        ),
+                        IconButton(
+                          onPressed: () async {
+                            if (_controller != null) {
+                              final _canGoForward =
+                                  await _controller!.canGoForward();
+                              if (_canGoForward) {
+                                _controller!.goForward();
+                              }
+                            }
+                          },
+                          icon: const Icon(Icons.arrow_forward_ios),
+                        )
+                      ],
+                    )
+                  : const SizedBox.shrink()
+            ],
+          ),
+          _isLoading
+              ? const Center(
+                  child: CircularProgressIndicator(),
+                )
+              : const SizedBox.shrink()
+        ],
+      ),
     );
   }
 }
