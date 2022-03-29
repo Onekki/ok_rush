@@ -10,8 +10,7 @@ class WebViewWidget extends StatefulWidget {
       {Key? key,
       this.showNav = true,
       required this.url,
-      required this.domain,
-      required this.cookie,
+      this.cookies,
       this.onWebViewCreated,
       this.onProgress,
       this.onPageStarted,
@@ -20,9 +19,8 @@ class WebViewWidget extends StatefulWidget {
       : super(key: key);
 
   final bool showNav;
-  final String domain;
-  final String? cookie;
   final String url;
+  final List<WebViewCookie>? cookies;
 
   final void Function(WebViewController controller)? onWebViewCreated;
   final void Function(int progress)? onProgress;
@@ -38,7 +36,7 @@ class WebViewWidget extends StatefulWidget {
 
 class _WebViewWidgetState extends State<WebViewWidget> {
   WebViewController? _controller;
-  bool _isLoading = true;
+  double _progress = 0;
 
   @override
   void initState() {
@@ -51,74 +49,62 @@ class _WebViewWidgetState extends State<WebViewWidget> {
   @override
   Widget build(BuildContext context) {
     return SafeArea(
-      child: Stack(
+      child: Column(
         children: [
-          Column(
-            children: [
-              Expanded(
-                  child: WebView(
-                debuggingEnabled: kDebugMode,
-                javascriptMode: JavascriptMode.unrestricted,
-                onWebViewCreated: (WebViewController webViewController) async {
-                  debugPrint("onWebViewCreated");
-                  if (widget.cookie != null) {
-                    final cookieMap = Uri.splitQueryString(widget.cookie!);
-                    final cookieManager = CookieManager();
-
-                    cookieMap.forEach((key, value) async {
-                      cookieManager.setCookie(
-                        WebViewCookie(
-                            name: key, value: value, domain: widget.domain),
-                      );
-                    });
-                  }
-                  if (widget.url.startsWith("assets")) {
-                    await webViewController.loadFlutterAsset(widget.url);
-                  } else {
-                    await webViewController.loadUrl(widget.url);
-                  }
-                  _controller = webViewController;
-                  if (widget.onWebViewCreated != null) {
-                    widget.onWebViewCreated!(webViewController);
-                  }
-                },
-                onProgress: (int progress) {
-                  debugPrint('WebView is loading (progress : $progress%)');
-                  if (widget.onProgress != null) {
-                    widget.onProgress!(progress);
-                  }
-                },
-                javascriptChannels: <JavascriptChannel>{
-                  JavascriptChannel(
-                      name: "Jio",
-                      onMessageReceived: (message) {
-                        if (widget.onJioCallback != null) {
-                          widget.onJioCallback!(message.message);
-                        }
-                      })
-                },
-                onPageStarted: (String url) async {
-                  debugPrint('Page started loading: $url');
-                  setState(() {
-                    _isLoading = true;
-                  });
-                  if (widget.onPageStarted != null) {
-                    widget.onPageStarted!(url);
-                  }
-                },
-                onPageFinished: (String url) async {
-                  debugPrint('Page finished loading: $url');
-                  setState(() {
-                    _isLoading = false;
-                  });
-                  if (widget.onPageFinished != null) {
-                    widget.onPageFinished!(url);
-                  }
-                },
-                backgroundColor: const Color(0x00ffffff),
-              )),
-              _controller != null && widget.showNav
-                  ? Row(
+          Expanded(
+            child: WebView(
+              debuggingEnabled: kDebugMode,
+              javascriptMode: JavascriptMode.unrestricted,
+              initialCookies: widget.cookies != null ? widget.cookies! : [],
+              onWebViewCreated: (WebViewController webViewController) async {
+                debugPrint("onWebViewCreated");
+                _controller = webViewController;
+                if (widget.url.startsWith("assets")) {
+                  await webViewController.loadFlutterAsset(widget.url);
+                } else {
+                  await webViewController.loadUrl(widget.url);
+                }
+                if (widget.onWebViewCreated != null) {
+                  widget.onWebViewCreated!(webViewController);
+                }
+              },
+              onProgress: (int progress) {
+                debugPrint('WebView is loading (progress : $progress%)');
+                setState(() {
+                  _progress = progress.toDouble();
+                });
+              },
+              javascriptChannels: <JavascriptChannel>{
+                JavascriptChannel(
+                    name: "Jio",
+                    onMessageReceived: (message) {
+                      if (widget.onJioCallback != null) {
+                        widget.onJioCallback!(message.message);
+                      }
+                    })
+              },
+              onWebResourceError: (error) {
+                debugPrint(error.toString());
+              },
+              onPageStarted: (String url) async {
+                debugPrint('Page started loading: $url');
+                if (widget.onPageStarted != null) {
+                  widget.onPageStarted!(url);
+                }
+              },
+              onPageFinished: (String url) async {
+                debugPrint('Page finished loading: $url');
+                if (widget.onPageFinished != null) {
+                  widget.onPageFinished!(url);
+                }
+              },
+              backgroundColor: const Color(0x00ffffff),
+            ),
+          ),
+          _controller != null && widget.showNav
+              ? Stack(
+                  children: [
+                    Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
                         IconButton(
@@ -153,13 +139,15 @@ class _WebViewWidgetState extends State<WebViewWidget> {
                           icon: const Icon(Icons.arrow_forward_ios),
                         )
                       ],
-                    )
-                  : const SizedBox.shrink()
-            ],
-          ),
-          _isLoading
-              ? const Center(
-                  child: CircularProgressIndicator(),
+                    ),
+                    _progress < 0 || _progress >= 100
+                        ? const SizedBox.shrink()
+                        : SizedBox(
+                            width: double.infinity,
+                            height: 1,
+                            child: LinearProgressIndicator(value: _progress),
+                          ),
+                  ],
                 )
               : const SizedBox.shrink()
         ],

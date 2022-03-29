@@ -51,8 +51,6 @@ class _StarArkAuthPageState extends AuthRequiredState<StarArkAuthPage> {
           children: [
             WebViewWidget(
               url: url,
-              domain: domain,
-              cookie: null,
               onPageStarted: (url) {
                 try {
                   String queryString = url.split("?")[1];

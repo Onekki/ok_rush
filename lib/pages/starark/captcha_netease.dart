@@ -37,8 +37,6 @@ class CaptchaWidgetState extends State<CaptchaWidget> {
           child: WebViewWidget(
             showNav: false,
             url: "assets/www/starark/index.html",
-            domain: "h5.stararknft.art",
-            cookie: widget.cookie,
             onWebViewCreated: widget.onWebViewCreated,
             onJioCallback: (message) {
               if (widget.onJioCallback != null) {
