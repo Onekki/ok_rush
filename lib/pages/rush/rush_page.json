@@ -1,0 +1,284 @@
+{
+  "name": "StarArk",
+  "url": "https://h5.stararknft.art/",
+  "headers": {
+  },
+  "presetQueries": [
+    "id",
+    "login_token",
+    "token_id",
+    "money",
+    "password",
+    "NECaptchaValidate"
+  ],
+  "predicate": {
+    "code": {
+      "type": "repeat",
+      "expect": [
+        0
+      ],
+      "parser": [
+        "code"
+      ]
+    }
+  },
+  "categories": [
+    {
+      "key": "box",
+      "name": "盲盒",
+      "states": [
+        {
+          "key": "none",
+          "name": "尚未运行"
+        },
+        {
+          "key": "initialize",
+          "name": "已初始化",
+          "html": ""
+        },
+        {
+          "key": "fetchCaptcha",
+          "name": "正在获取验证码",
+          "js": ""
+        },
+        {
+          "key": "inputCaptcha",
+          "name": "请点击验证码",
+          "forQuery": {
+            "NECaptchaValidate": [
+              "data",
+              "validate"
+            ]
+          }
+        },
+        {
+          "key": "t10*1000",
+          "forHeader": {
+            "t": ""
+          }
+        },
+        {
+          "key": "sign",
+          "js": "",
+          "forHeader": {
+            "sign": ""
+          }
+        },
+        {
+          "key": "fetchTarget",
+          "name": "正在获取目标详情",
+          "method": "POST",
+          "endpoint": "api/Box/detailed",
+          "forQuery": {
+            "token_id": [
+              "data",
+              "info",
+              "token_id"
+            ],
+            "money": [
+              "data",
+              "info",
+              "price"
+            ]
+          }
+        },
+        {
+          "key": "prepareOrder",
+          "method": "POST",
+          "endpoint": "api/Pay/before_buy_box",
+          "data": [
+            "id",
+            "login_token",
+            "token_id"
+          ]
+        },
+        {
+          "key": "payOrder",
+          "method": "POST",
+          "endpoint": "api/Pay/direct_buy_box",
+          "query": [
+            "id",
+            "login_token",
+            "token_id",
+            "money",
+            "password",
+            "NECaptchaValidate"
+          ]
+        },
+        {
+          "key": "done",
+          "name": "已停止"
+        },
+        {
+          "key": "cancel",
+          "name": "已取消"
+        }
+      ]
+    },
+    {
+      "key": "product",
+      "name": "产品",
+      "states": [
+        {
+          "key": "none",
+          "name": "尚未运行"
+        },
+        {
+          "key": "initialize",
+          "name": "已初始化",
+          "html": ""
+        },
+        {
+          "key": "fetchCaptcha",
+          "name": "正在获取验证码",
+          "js": ""
+        },
+        {
+          "key": "inputCaptcha",
+          "name": "请点击验证码",
+          "parser": {
+            "NECaptchaValidate": [
+              "data",
+              "validate"
+            ]
+          }
+        },
+        {
+          "key": "fetchTarget",
+          "name": "正在获取目标详情",
+          "method": "POST",
+          "url": "https://h5.stararknft.art/api/Box/detailed",
+          "headers": {
+          },
+          "parser": {
+            "token_id": [
+              "data",
+              "info",
+              "token_id"
+            ],
+            "money": [
+              "data",
+              "info",
+              "price"
+            ]
+          }
+        },
+        {
+          "key": "prepareOrder",
+          "method": "POST",
+          "url": "https://h5.stararknft.art/api/Pay/before_buy_box",
+          "data": [
+            "id",
+            "login_token",
+            "token_id"
+          ]
+        },
+        {
+          "key": "payOrder",
+          "method": "POST",
+          "url": "https://h5.stararknft.art/api/Pay/direct_buy_box",
+          "query": [
+            "id",
+            "login_token",
+            "token_id",
+            "money",
+            "password",
+            "NECaptchaValidate"
+          ]
+        },
+        {
+          "key": "done",
+          "name": "已停止"
+        },
+        {
+          "key": "cancel",
+          "name": "已取消"
+        }
+      ]
+    },
+    {
+      "key": "goods",
+      "name": "商品",
+      "presetQueries": [
+        "goods_id"
+      ],
+      "states": [
+        {
+          "key": "none",
+          "name": "尚未运行"
+        },
+        {
+          "key": "initialize",
+          "name": "已初始化",
+          "html": ""
+        },
+        {
+          "key": "fetchCaptcha",
+          "name": "正在获取验证码",
+          "js": ""
+        },
+        {
+          "key": "inputCaptcha",
+          "name": "请点击验证码",
+          "parser": {
+            "NECaptchaValidate": [
+              "data",
+              "validate"
+            ]
+          }
+        },
+        {
+          "key": "fetchTarget",
+          "name": "正在获取目标详情",
+          "method": "POST",
+          "url": "https://h5.stararknft.art/api/Box/detailed",
+          "headers": {
+          },
+          "parser": {
+            "token_id": [
+              "data",
+              "info",
+              "token_id"
+            ],
+            "money": [
+              "data",
+              "info",
+              "price"
+            ]
+          }
+        },
+        {
+          "key": "prepareOrder",
+          "method": "POST",
+          "url": "https://h5.stararknft.art/api/Pay/before_buy_box",
+          "data": [
+            "id",
+            "login_token",
+            "token_id"
+          ]
+        },
+        {
+          "key": "payOrder",
+          "method": "POST",
+          "url": "https://h5.stararknft.art/api/Pay/direct_buy_box",
+          "query": [
+            "id",
+            "login_token",
+            "token_id",
+            "money",
+            "password",
+            "NECaptchaValidate"
+          ]
+        },
+        {
+          "key": "done",
+          "name": "已停止"
+        },
+        {
+          "key": "cancel",
+          "name": "已取消"
+        }
+      ]
+    }
+  ]
+}
