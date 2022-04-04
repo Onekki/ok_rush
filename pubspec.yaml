@@ -39,6 +39,9 @@ dependencies:
   dio_logging_interceptor: ^1.0.1
   webview_flutter: ^3.0.1
   webview_cookie_manager: ^2.0.6
+  provider: ^6.0.2
+  flutter_linkify: ^5.0.2
+  url_launcher: ^6.0.20
 
 dev_dependencies:
   flutter_test:
@@ -67,6 +70,7 @@ flutter:
   #   - images/a_dot_burr.jpeg
   #   - images/a_dot_ham.jpeg
   assets:
+    - assets/www/rush/index.html
     - assets/www/starark/index.html
     - assets/www/starark/js/load.min.js
     - assets/www/starark/js/md5.min.js

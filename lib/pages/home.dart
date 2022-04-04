@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:ok_rush/components/auth_required_state.dart';
+import 'package:ok_rush/pages/rush/rush.dart';
+import 'package:ok_rush/pages/rush/rush_page.dart';
 import 'package:ok_rush/utils/constants.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -11,6 +13,8 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends AuthRequiredState<HomePage> {
+  final List<RushContainer> _rushContainers = [];
+  bool _isLoading = false;
   String? _currentUserEmail;
   String? _currentUserAvatarSrc;
 
@@ -23,7 +27,27 @@ class _HomePageState extends AuthRequiredState<HomePage> {
       if (_currentUserEmail!.endsWith("@qq.com")) {
         _currentUserAvatarSrc = "http://q1.qlogo.cn/g?b=qq&nk=$qq&s=100";
       }
+      _fetchRushes();
     }
+  }
+
+  void _fetchRushes() async {
+    setState(() {
+      _isLoading = true;
+    });
+    final response =
+        await supabase.from("rushes").select("platform,category").execute();
+    if (response.error != null) {
+      context.showErrorSnackBar(message: response.error!.message);
+    } else {
+      _rushContainers.clear();
+      _rushContainers.addAll(List<RushContainer>.from(response.data.map((item) {
+        return RushContainer.jsonDecode(item);
+      })));
+    }
+    setState(() {
+      _isLoading = false;
+    });
   }
 
   @override
@@ -32,86 +56,91 @@ class _HomePageState extends AuthRequiredState<HomePage> {
       appBar: AppBar(
         title: const Text("首页"),
         actions: [
-          IconButton(
-              onPressed: _signOut,
-              icon: const Icon(Icons.logout)
-          ),
+          IconButton(onPressed: _signOut, icon: const Icon(Icons.logout)),
           IconButton(
               onPressed: () {
                 Navigator.of(context).pushNamed('/reset_pwd');
               },
-              icon: const Icon(Icons.admin_panel_settings)
-          ),
+              icon: const Icon(Icons.admin_panel_settings)),
         ],
       ),
-      body: Column(
-        children: <Widget>[
-          _currentUserEmail != null
-              ? Column(
-                  children: <Widget>[
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 32, 16, 8),
-                      child: _currentUserAvatarSrc != null ?
-                      Image.network(_currentUserAvatarSrc!) :
-                      const Text("当前用户"),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-                      child: Text(_currentUserEmail!),
-                    )
-                  ],
-                )
-              : const SizedBox.shrink(),
-          Expanded(
-            child: Center(
-              child: Padding(
+      body: _currentUserEmail != null
+          ? Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: <Widget>[
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 32, 16, 8),
+                  child: _currentUserAvatarSrc != null
+                      ? Image.network(_currentUserAvatarSrc!)
+                      : const Text("当前用户"),
+                ),
+                Padding(
                   padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-                  child: Column(
-                    children: <Widget>[
-                      Expanded(
-                        child: Center(
-                          child: TextButton(
-                            // color: Theme.of(context).primaryColor,
+                  child: Text(_currentUserEmail!),
+                ),
+                const Spacer(),
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pushNamed('/rush');
+                  },
+                  // textColor: Colors.white,
+                  child: const Text('Go StarArk'),
+                ),
+                _isLoading
+                    ? const Center(
+                        child: CircularProgressIndicator(),
+                      )
+                    : ListView.builder(
+                        shrinkWrap: true,
+                        itemCount: _rushContainers.length,
+                        itemBuilder: (context, index) {
+                          return TextButton(
                             onPressed: () {
-                              Navigator.of(context).pushNamed('/starark');
+                              Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) => RushPage(
+                                          rushContainer:
+                                              _rushContainers[index])));
                             },
                             // textColor: Colors.white,
-                            child: const Text('Go StarArk'),
-                          ),
-                        )
+                            child:
+                                Text("Go ${_rushContainers[index].platform}"),
+                          );
+                        },
                       ),
-                    ],
-                  )),
-            ),
-          ),
-        ],
-      ),
+                const Spacer(),
+              ],
+            )
+          : const SizedBox.shrink(),
     );
   }
 
   void _signOut() {
-    showDialog(context: context, builder: (context) {
-      return AlertDialog(
-        title: const Text("确认退出登陆"),
-        actions: [
-          TextButton(
-            child: const Text('取消'),
-            onPressed: () {
-              Navigator.of(context).pop();
-            },
-          ),
-          TextButton(
-            child: const Text('确认'),
-            onPressed: () async {
-              final response = await supabase.auth.signOut();
-              final error = response.error;
-              if (error != null) {
-                context.showErrorSnackBar(message: error.message);
-              }
-            },
-          ),
-        ],
-      );
-    });
+    showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: const Text("确认退出登陆"),
+            actions: [
+              TextButton(
+                child: const Text('取消'),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              ),
+              TextButton(
+                child: const Text('确认'),
+                onPressed: () async {
+                  final response = await supabase.auth.signOut();
+                  final error = response.error;
+                  if (error != null) {
+                    context.showErrorSnackBar(message: error.message);
+                  }
+                },
+              ),
+            ],
+          );
+        });
   }
 }
