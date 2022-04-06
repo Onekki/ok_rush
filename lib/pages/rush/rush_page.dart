@@ -76,6 +76,7 @@ class _RushPageState extends AuthRequiredState<RushPage> {
                                     content: "assets/www/rush/index.html",
                                     onWebViewCreated: (controller) {
                                       store.controller = controller;
+                                      store.runInit();
                                     },
                                   ),
                                 ),
@@ -178,7 +179,7 @@ class _RushPageState extends AuthRequiredState<RushPage> {
     );
   }
 
-  void _editConfig(store) {
+  void _editConfig(RushStore store) {
     showDialog(
       context: context,
       builder: (context) {

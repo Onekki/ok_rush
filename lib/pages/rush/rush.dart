@@ -14,16 +14,17 @@ class RushContainer {
 }
 
 class Rush {
-  Rush(
-      {required this.name,
-      required this.runners,
-      required this.steps,
-      this.magic,
-      this.inputKeys,
-      this.cache,
-      this.webShowKeys});
+  Rush({required this.name,
+    required this.runners,
+    required this.steps,
+    this.init,
+    this.magic,
+    this.inputKeys,
+    this.cache,
+    this.webShowKeys});
 
   final String name;
+  final List<String>? init;
   final List<String>? magic;
   final List<dynamic>? inputKeys;
   final Map<String, dynamic>? cache;
@@ -32,18 +33,21 @@ class Rush {
 
   final List<String>? webShowKeys;
 
-  factory Rush.jsonDecode(json) => Rush(
-      name: json["name"],
-      magic: json["magic"]?.cast<String>(),
-      inputKeys: json["inputKeys"],
-      cache: json["cache"],
-      runners: Map<String, AbsRunner>.from(json["runners"].map((key, value) {
-        if (key.startsWith("dio")) {
-          return MapEntry(key, DIORunner.jsonDecode(value));
-        } else if (key.startsWith("jio")) {
-          return MapEntry(key, JIORunner.jsonDecode(value));
-        }
-        throw UnimplementedError();
+  factory Rush.jsonDecode(json) =>
+      Rush(
+          name: json["name"],
+          init: json["init"]?.cast<String>(),
+          magic: json["magic"]?.cast<String>(),
+          inputKeys: json["inputKeys"],
+          cache: json["cache"],
+          runners: Map<String, AbsRunner>.from(
+              json["runners"].map((key, value) {
+                if (key.startsWith("dio")) {
+                  return MapEntry(key, DIORunner.jsonDecode(value));
+                } else if (key.startsWith("jio")) {
+                  return MapEntry(key, JIORunner.jsonDecode(value));
+                }
+                throw UnimplementedError();
       })),
       steps: json["steps"]?.cast<String>());
 }

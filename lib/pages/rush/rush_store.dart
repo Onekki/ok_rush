@@ -70,12 +70,12 @@ class RushStore extends ChangeNotifier {
       _rush = Rush.jsonDecode(response.data[0]["rush"]);
       _rush?.inputKeys?.forEach((key) {
         final controller = TextEditingController();
-        if (key is List) {
-          inputControllers[key.join(",")] = controller;
-          controllerLabels.add(key.join(","));
+        String combineKey = key is List ? key.join(",") : key;
+        inputControllers[combineKey] = controller;
+        if (_rush?.cache?[key] != null) {
+          controllerLabels.add(combineKey + ":${_rush?.cache?[key]}");
         } else {
-          inputControllers[key] = controller;
-          controllerLabels.add(key);
+          controllerLabels.add(combineKey);
         }
         controllers.add(controller);
       });
@@ -92,7 +92,8 @@ class RushStore extends ChangeNotifier {
     _fetchConfig(context, rushContainer);
   }
 
-  void _fetchConfig(BuildContext context, RushContainer rushContainer) async {
+  Future<void> _fetchConfig(
+      BuildContext context, RushContainer rushContainer) async {
     try {
       var response = await supabase
           .from("configs")
@@ -107,7 +108,7 @@ class RushStore extends ChangeNotifier {
         final config = response.data[0]["config"];
         debugPrint("config=$config");
         inputControllers.forEach((key, value) {
-          value.text = config[key];
+          value.text = config[key] ?? "";
         });
       }
     } catch (e) {
@@ -147,11 +148,16 @@ class RushStore extends ChangeNotifier {
     _run(_rush?.steps);
   }
 
+  void runInit() {
+    _run(_rush?.init);
+  }
+
   void runAction() {
     _run(_rush?.magic);
   }
 
   void _run(runnerKeys) async {
+    if (runnerKeys == null) return;
     if (isRunning) {
       stop();
     } else {
