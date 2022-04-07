@@ -88,7 +88,7 @@ class _WebEngineState extends State<WebEngine> {
                       if (_controller != null &&
                           _controller!.completer != null &&
                           !_controller!.completer!.isCompleted) {
-                        _controller!.completer!.complete(message);
+                        _controller!.completer!.complete(message.message);
                       }
                     })
               },

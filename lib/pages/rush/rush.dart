@@ -36,18 +36,18 @@ class Rush {
   factory Rush.jsonDecode(json) =>
       Rush(
           name: json["name"],
-          init: json["init"]?.cast<String>(),
-          magic: json["magic"]?.cast<String>(),
-          inputKeys: json["inputKeys"],
-          cache: json["cache"],
-          runners: Map<String, AbsRunner>.from(
-              json["runners"].map((key, value) {
-                if (key.startsWith("dio")) {
-                  return MapEntry(key, DIORunner.jsonDecode(value));
-                } else if (key.startsWith("jio")) {
-                  return MapEntry(key, JIORunner.jsonDecode(value));
-                }
-                throw UnimplementedError();
+      init: json["init"]?.cast<String>(),
+      magic: json["magic"]?.cast<String>(),
+      webShowKeys: json["webShowKeys"]?.cast<String>(),
+      inputKeys: json["inputKeys"],
+      cache: json["cache"],
+      runners: Map<String, AbsRunner>.from(json["runners"].map((key, value) {
+        if (key.startsWith("dio")) {
+          return MapEntry(key, DIORunner.jsonDecode(value));
+        } else if (key.startsWith("jio")) {
+          return MapEntry(key, JIORunner.jsonDecode(value));
+        }
+        throw UnimplementedError();
       })),
       steps: json["steps"]?.cast<String>());
 }

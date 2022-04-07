@@ -71,6 +71,7 @@ flutter:
   #   - images/a_dot_ham.jpeg
   assets:
     - assets/www/rush/index.html
+    - assets/www/rush/js/TCaptcha.js
     - assets/www/starark/index.html
     - assets/www/starark/js/load.min.js
     - assets/www/starark/js/md5.min.js

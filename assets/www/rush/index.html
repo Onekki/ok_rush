@@ -6,5 +6,33 @@
     <meta content="width=device-width, initial-scale=1.0" name="viewport">
 </head>
 <body>
+<button data-appid="2021134148"
+        data-biz-state="data-biz-state"
+        data-cbfn="callbackName"
+        id="TencentCaptcha"
+        type="button">验证
+</button>
+<script src="js/TCaptcha.js"></script>
+<script>
+        window.callbackName = function (data) {
+            console.log('callback:', data);
+            if (data.ret === 0) {
+                Jio.postMessage(JSON.stringify({
+                  code: 1000,
+                  data: data
+                }));
+            } else {
+                Jio.postMessage(JSON.stringify({
+                  code: 2000,
+                  message: "验证失败"
+                }));
+            }
+        }
+        const TencentCaptcha = document.getElementById("TencentCaptcha")
+        const showCaptcha = () => {
+            TencentCaptcha.click()
+        }
+
+</script>
 </body>
 </html>
