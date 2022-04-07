@@ -108,7 +108,7 @@ class RushStore extends ChangeNotifier {
         final config = response.data[0]["config"];
         debugPrint("config=$config");
         inputControllers.forEach((key, value) {
-          value.text = config[key] ?? "";
+          if (config[key] != null) value.text = config[key];
         });
       }
     } catch (e) {
@@ -124,6 +124,7 @@ class RushStore extends ChangeNotifier {
     try {
       final config =
           inputControllers.map((key, value) => MapEntry(key, value.text));
+      config.removeWhere((key, value) => value.isEmpty);
       var response = await supabase.from("configs").upsert({
         "user": supabase.auth.currentUser!.id,
         "platform": rushContainer.platform,
@@ -180,7 +181,8 @@ class RushStore extends ChangeNotifier {
       for (String runnerKey in runnerKeys) {
         _runner = _rush!.runners[runnerKey]!;
         notifyListeners();
-        await _runner.run(this, _rusher, _rush!);
+        final data = await _runner.run(this, _rusher, _rush!);
+        if (data == null) break;
       }
       if (isRunning) {
         _runner = NothingRunner("已完成");

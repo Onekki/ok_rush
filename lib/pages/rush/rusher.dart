@@ -10,7 +10,6 @@ import 'package:ok_rush/pages/rush/web_engine.dart';
 
 class Rusher {
   final Dio _dio = Dio();
-  Duration durationSafe = const Duration(microseconds: 5000);
 
   var _enabled = true;
 
@@ -32,7 +31,6 @@ class Rusher {
   }
 
   Future<dynamic> request(type, options) async {
-    if (!_enabled) return null;
     switch (type.runtimeType) {
       case DIORunner:
         return await _dioRequest(options);
@@ -42,6 +40,7 @@ class Rusher {
   }
 
   Future<dynamic> _dioRequest(options) async {
+    if (!_enabled) return null;
     final delayMs = Random().nextInt(nextMs!) + minMs!;
     final delayDuration = Duration(milliseconds: delayMs);
     try {
@@ -67,23 +66,19 @@ class Rusher {
       logger("$delayMs - ${e.message}", false);
     } catch (e) {
       logger("$delayMs - $e", false);
-      return await Future.delayed(durationSafe, () async {
-        if (!_enabled) return null;
-        return await _dioRequest(options);
-      });
     }
     if (delayMs > 0) {
+      if (!_enabled) return null;
       return await Future.delayed(delayDuration, () async {
-        if (!_enabled) return null;
         return await _dioRequest(options);
       });
     } else {
-      if (!_enabled) return null;
       return await _dioRequest(options);
     }
   }
 
   Future<dynamic> _jioRequest(options) async {
+    if (!_enabled) return null;
     final delayMillis = Random().nextInt(nextMs!) + minMs!;
     final delayDuration = Duration(milliseconds: delayMillis);
     final script = "${options["function"]}(${options["args"]})";
@@ -108,12 +103,11 @@ class Rusher {
       logger("$delayMillis - ${e.toString()}", false);
     }
     if (delayMillis > 0) {
+      if (!_enabled) return null;
       return await Future.delayed(delayDuration, () async {
-        if (!_enabled) return null;
         return await _jioRequest(options);
       });
     } else {
-      if (!_enabled) return null;
       return await _jioRequest(options);
     }
   }
