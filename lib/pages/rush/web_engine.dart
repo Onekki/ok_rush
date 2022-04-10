@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -42,14 +41,6 @@ class WebEngine extends StatefulWidget {
 class _WebEngineState extends State<WebEngine> {
   WebController? _controller;
   double _progress = 0;
-
-  @override
-  void initState() {
-    if (Platform.isAndroid) {
-      WebView.platform = SurfaceAndroidWebView();
-    }
-    super.initState();
-  }
 
   @override
   Widget build(BuildContext context) {
