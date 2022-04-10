@@ -81,7 +81,7 @@ class _HomePageState extends AuthRequiredState<HomePage> {
                 const Spacer(),
                 TextButton(
                   onPressed: () {
-                    Navigator.of(context).pushNamed('/rush');
+                    Navigator.of(context).pushNamed('/starark');
                   },
                   // textColor: Colors.white,
                   child: const Text('Go StarArk'),
