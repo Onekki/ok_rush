@@ -145,7 +145,9 @@ class _RushPageState extends AuthRequiredState<RushPage> {
                               vertical: 4, horizontal: 16),
                           child: SelectableLinkify(
                             onOpen: (link) async {
-                              String url = link.url.replaceAll(",", "");
+                              String url = link.url
+                                  .replaceAll(",", "")
+                                  .replaceAll("}", "");
                               if (await canLaunch(url)) {
                                 await launch(url);
                               } else {
