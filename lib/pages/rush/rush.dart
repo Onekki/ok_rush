@@ -14,18 +14,23 @@ class RushContainer {
 }
 
 class Rush {
-  Rush({required this.name,
-    required this.runners,
-    required this.steps,
-    this.init,
-    this.magic,
-    this.inputKeys,
-    this.cache,
-    this.webShowKeys});
+  Rush(
+      {required this.name,
+      required this.runners,
+      required this.steps,
+      this.init,
+      this.source,
+      this.magic,
+      this.browser,
+      this.inputKeys,
+      this.cache,
+      this.webShowKeys});
 
   final String name;
   final List<String>? init;
+  final List<String>? source;
   final List<String>? magic;
+  final Map<String, dynamic>? browser;
   final List<dynamic>? inputKeys;
   final Map<String, dynamic>? cache;
   final Map<String, AbsRunner> runners;
@@ -33,11 +38,12 @@ class Rush {
 
   final List<String>? webShowKeys;
 
-  factory Rush.jsonDecode(json) =>
-      Rush(
-          name: json["name"],
+  factory Rush.jsonDecode(json) => Rush(
+      name: json["name"],
       init: json["init"]?.cast<String>(),
+      source: json["source"]?.cast<String>(),
       magic: json["magic"]?.cast<String>(),
+      browser: json["browser"],
       webShowKeys: json["webShowKeys"]?.cast<String>(),
       inputKeys: json["inputKeys"],
       cache: json["cache"],
@@ -127,8 +133,8 @@ class DIORunner extends AbsRunner {
     return data;
   }
 
-  Map<String, String> getHeaders(RushStore store, Rush rush) {
-    Map<String, String> headers = {};
+  Map<String, dynamic> getHeaders(RushStore store, Rush rush) {
+    Map<String, dynamic> headers = {};
     headerKeys?.forEach((key) {
       final value = store.cache[key];
       if (value != null) {

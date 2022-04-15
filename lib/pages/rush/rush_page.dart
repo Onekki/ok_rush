@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_linkify/flutter_linkify.dart';
 import 'package:ok_rush/components/auth_required_state.dart';
+import 'package:ok_rush/pages/rush/browser_page.dart';
 import 'package:ok_rush/pages/rush/rush.dart';
 import 'package:ok_rush/pages/rush/rush_store.dart';
 import 'package:ok_rush/pages/rush/web_engine.dart';
@@ -73,7 +74,7 @@ class _RushPageState extends AuthRequiredState<RushPage> {
                                   aspectRatio: 320.0 / 320.0,
                                   child: WebEngine(
                                     showNav: false,
-                                    content: "assets/www/rush/index.html",
+                                    content: store.webUrl,
                                     onWebViewCreated: (controller) {
                                       store.controller = controller;
                                       store.runInit();
@@ -221,6 +222,25 @@ class _RushPageState extends AuthRequiredState<RushPage> {
             ),
           ),
           actions: <Widget>[
+            store.browser != null
+                ? TextButton(
+                    child: const Text('浏览器'),
+                    onPressed: () async {
+                      final result = await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => BrowserPage(
+                                  webUrl: store.browser!["webUrl"])));
+                      if (result != null) {
+                        store.putCache({
+                          "cookie": ["data"]
+                        }, {
+                          "data": result
+                        });
+                      }
+                    },
+                  )
+                : const SizedBox.shrink(),
             TextButton(
               child: const Text("确认"),
               onPressed: () {

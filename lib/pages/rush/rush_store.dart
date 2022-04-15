@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
@@ -5,6 +6,7 @@ import 'package:ok_rush/pages/rush/rush.dart';
 import 'package:ok_rush/pages/rush/rusher.dart';
 import 'package:ok_rush/pages/rush/web_engine.dart';
 import 'package:ok_rush/utils/constants.dart';
+import 'package:path_provider/path_provider.dart';
 
 class RushStore extends ChangeNotifier {
   Rush? _rush;
@@ -13,9 +15,12 @@ class RushStore extends ChangeNotifier {
 
   get magic => _rush?.magic;
 
+  get browser => _rush?.browser;
+
   get webOffstage => !(_rush?.webShowKeys?.contains(runState) ?? false);
 
   late final Rusher _rusher;
+  late final String webUrl;
   WebController? controller;
   AbsRunner _runner = LoadingRunner();
 
@@ -47,7 +52,7 @@ class RushStore extends ChangeNotifier {
           }
         } else {
           runStateColor =
-              Colors.primaries[Random().nextInt(Colors.primaries.length)];
+          Colors.primaries[Random().nextInt(Colors.primaries.length)];
           rushErrorLog = log.toString();
         }
         notifyListeners();
@@ -67,19 +72,20 @@ class RushStore extends ChangeNotifier {
     if (response.error != null) {
       context.showErrorSnackBar(message: response.error!.message);
     } else {
+      debugPrint(response.data.toString());
       _rush = Rush.jsonDecode(response.data[0]["rush"]);
-      _rush?.inputKeys?.forEach((key) {
+      _rush!.inputKeys?.forEach((key) {
         final controller = TextEditingController();
         String combineKey = key is List ? key.join(",") : key;
         inputControllers[combineKey] = controller;
-        if (_rush?.cache?[key] != null) {
-          controllerLabels.add(combineKey + ":${_rush?.cache?[key]}");
+        if (_rush!.cache?[key] != null) {
+          controllerLabels.add(combineKey + ":${_rush!.cache?[key]}");
         } else {
           controllerLabels.add(combineKey);
         }
         controllers.add(controller);
       });
-      _rush?.cache?.forEach((key, value) {
+      _rush!.cache?.forEach((key, value) {
         inputControllers[key]?.text = value;
       });
       inputControllers.putIfAbsent("min", () => minMsController);
@@ -88,12 +94,34 @@ class RushStore extends ChangeNotifier {
       controllers.add(maxMsController);
       controllerLabels.add("min");
       controllerLabels.add("max");
+
+      final appDir = await getApplicationDocumentsDirectory();
+      if (_rush!.source != null) {
+        webUrl = "${appDir.path}/rushes/${_rush!.name}/index.html";
+      } else {
+        webUrl = "assets/www/rush/index.html";
+      }
+      debugPrint(webUrl);
+
+      _rush!.source?.forEach((item) async {
+        final response = await supabase.storage
+            .from("rushes")
+            .download("${_rush!.name}/$item");
+        if (response.error != null) {
+          context.showSnackBar(message: response.error!.message);
+        } else if (response.data != null) {
+          Directory rushDir = Directory("${appDir.path}/rushes/${_rush!.name}");
+          if (!await rushDir.exists()) rushDir.createSync(recursive: true);
+          File file = File("${rushDir.path}/$item");
+          file.writeAsBytesSync(response.data!);
+        }
+      });
+
+      _fetchConfig(context, rushContainer);
     }
-    _fetchConfig(context, rushContainer);
   }
 
-  Future<void> _fetchConfig(
-      BuildContext context, RushContainer rushContainer) async {
+  Future<void> _fetchConfig(BuildContext context, RushContainer rushContainer) async {
     try {
       var response = await supabase
           .from("configs")
@@ -123,7 +151,7 @@ class RushStore extends ChangeNotifier {
     notifyListeners();
     try {
       final config =
-          inputControllers.map((key, value) => MapEntry(key, value.text));
+      inputControllers.map((key, value) => MapEntry(key, value.text));
       config.removeWhere((key, value) => value.isEmpty);
       var response = await supabase.from("configs").upsert({
         "user": supabase.auth.currentUser!.id,
@@ -159,6 +187,7 @@ class RushStore extends ChangeNotifier {
 
   void _run(runnerKeys) async {
     if (runnerKeys == null) return;
+    debugPrint("$isRunning");
     if (isRunning) {
       stop();
     } else {
@@ -181,7 +210,9 @@ class RushStore extends ChangeNotifier {
       for (String runnerKey in runnerKeys) {
         _runner = _rush!.runners[runnerKey]!;
         notifyListeners();
+        debugPrint(runnerKey);
         final data = await _runner.run(this, _rusher, _rush!);
+        debugPrint("$runnerKey $data");
         if (data == null) break;
       }
       if (isRunning) {

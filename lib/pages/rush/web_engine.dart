@@ -59,6 +59,8 @@ class _WebEngineState extends State<WebEngine> {
                   await webViewController.loadFlutterAsset(widget.content);
                 } else if (widget.content.startsWith("http")) {
                   await webViewController.loadUrl(widget.content);
+                } else if (widget.content.startsWith("/")) {
+                  await webViewController.loadFile(widget.content);
                 } else {
                   await webViewController.loadHtmlString(widget.content);
                 }

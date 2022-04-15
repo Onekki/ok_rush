@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
 
+import 'package:async/async.dart';
 import 'package:dio/dio.dart';
 import 'package:dio_logging_interceptor/dio_logging_interceptor.dart';
 import 'package:flutter/foundation.dart';
@@ -12,6 +13,7 @@ class Rusher {
   final Dio _dio = Dio();
 
   var _enabled = true;
+  CancelableOperation? _cancelableOperation;
 
   int? minMs;
   int? nextMs;
@@ -69,9 +71,12 @@ class Rusher {
     }
     if (delayMs > 0) {
       if (!_enabled) return null;
-      return await Future.delayed(delayDuration, () async {
+      _cancelableOperation = CancelableOperation.fromFuture(
+          Future.delayed(delayDuration, () async {
+        if (_cancelableOperation?.isCanceled ?? true) return;
         return await _dioRequest(options);
-      });
+      }));
+      return await _cancelableOperation?.value;
     } else {
       return await _dioRequest(options);
     }
@@ -104,9 +109,12 @@ class Rusher {
     }
     if (delayMillis > 0) {
       if (!_enabled) return null;
-      return await Future.delayed(delayDuration, () async {
+      _cancelableOperation = CancelableOperation.fromFuture(
+          Future.delayed(delayDuration, () async {
+        if (_cancelableOperation?.isCanceled ?? true) return;
         return await _jioRequest(options);
-      });
+      }));
+      return await _cancelableOperation?.value;
     } else {
       return await _jioRequest(options);
     }
@@ -127,6 +135,7 @@ class Rusher {
 
   void stop() {
     _enabled = false;
+    _cancelableOperation?.cancel();
   }
 
   void dispose() {

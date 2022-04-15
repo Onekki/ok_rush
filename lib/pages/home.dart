@@ -14,6 +14,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends AuthRequiredState<HomePage> {
   final List<RushContainer> _rushContainers = [];
+
   bool _isLoading = false;
   String? _currentUserEmail;
   String? _currentUserAvatarSrc;
@@ -41,9 +42,10 @@ class _HomePageState extends AuthRequiredState<HomePage> {
       context.showErrorSnackBar(message: response.error!.message);
     } else {
       _rushContainers.clear();
-      _rushContainers.addAll(List<RushContainer>.from(response.data.map((item) {
-        return RushContainer.jsonDecode(item);
-      })));
+      response.data.forEach((item) {
+        final container = RushContainer.jsonDecode(item);
+        _rushContainers.add(container);
+      });
     }
     setState(() {
       _isLoading = false;
@@ -78,38 +80,32 @@ class _HomePageState extends AuthRequiredState<HomePage> {
                   padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
                   child: Text(_currentUserEmail!),
                 ),
-                const Spacer(),
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pushNamed('/starark');
-                  },
-                  // textColor: Colors.white,
-                  child: const Text('Go StarArk'),
+                Expanded(
+                  child: _isLoading
+                      ? const Center(
+                          child: CircularProgressIndicator(),
+                        )
+                      : ListView.builder(
+                          itemCount: _rushContainers.length,
+                          itemBuilder: (context, index) {
+                            final item = _rushContainers[index];
+                            return GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) =>
+                                            RushPage(rushContainer: item)));
+                              },
+                              child: Chip(
+                                // textColor: Colors.white,
+                                label:
+                                    Text("${item.platform}:${item.category}"),
+                              ),
+                            );
+                          },
+                        ),
                 ),
-                _isLoading
-                    ? const Center(
-                        child: CircularProgressIndicator(),
-                      )
-                    : ListView.builder(
-                        shrinkWrap: true,
-                        itemCount: _rushContainers.length,
-                        itemBuilder: (context, index) {
-                          return TextButton(
-                            onPressed: () {
-                              Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (context) => RushPage(
-                                          rushContainer:
-                                              _rushContainers[index])));
-                            },
-                            // textColor: Colors.white,
-                            child:
-                                Text("Go ${_rushContainers[index].platform}"),
-                          );
-                        },
-                      ),
-                const Spacer(),
               ],
             )
           : const SizedBox.shrink(),
