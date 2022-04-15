@@ -89,18 +89,23 @@ class _HomePageState extends AuthRequiredState<HomePage> {
                           itemCount: _rushContainers.length,
                           itemBuilder: (context, index) {
                             final item = _rushContainers[index];
-                            return GestureDetector(
-                              onTap: () {
-                                Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                        builder: (context) =>
-                                            RushPage(rushContainer: item)));
-                              },
-                              child: Chip(
+                            return Align(
+                              child: ElevatedButton(
+                                onPressed: () {
+                                  Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (context) =>
+                                              RushPage(rushContainer: item)));
+                                },
                                 // textColor: Colors.white,
-                                label:
+                                child:
                                     Text("${item.platform}:${item.category}"),
+                                style: ButtonStyle(
+                                    shape: MaterialStateProperty.all(
+                                        RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(24.0)))),
                               ),
                             );
                           },

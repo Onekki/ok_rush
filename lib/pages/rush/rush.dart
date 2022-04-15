@@ -15,8 +15,7 @@ class RushContainer {
 
 class Rush {
   Rush(
-      {required this.name,
-      required this.runners,
+      {required this.runners,
       required this.steps,
       this.init,
       this.source,
@@ -26,7 +25,6 @@ class Rush {
       this.cache,
       this.webShowKeys});
 
-  final String name;
   final List<String>? init;
   final List<String>? source;
   final List<String>? magic;
@@ -39,7 +37,6 @@ class Rush {
   final List<String>? webShowKeys;
 
   factory Rush.jsonDecode(json) => Rush(
-      name: json["name"],
       init: json["init"]?.cast<String>(),
       source: json["source"]?.cast<String>(),
       magic: json["magic"]?.cast<String>(),

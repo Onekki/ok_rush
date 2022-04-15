@@ -9,9 +9,10 @@ import 'package:ok_rush/utils/constants.dart';
 import 'package:path_provider/path_provider.dart';
 
 class RushStore extends ChangeNotifier {
+  late final RushContainer _rushContainer;
   Rush? _rush;
 
-  get name => _rush?.name ?? "加载中";
+  get name => _rushContainer.category;
 
   get magic => _rush?.magic;
 
@@ -41,6 +42,7 @@ class RushStore extends ChangeNotifier {
   Color runStateColor = Colors.grey;
 
   RushStore(BuildContext context, rushContainer) {
+    _rushContainer = rushContainer;
     _rusher = Rusher((String log, bool isExpected) {
       debugPrint(log.toString());
       if (isRunning) {
@@ -52,7 +54,7 @@ class RushStore extends ChangeNotifier {
           }
         } else {
           runStateColor =
-          Colors.primaries[Random().nextInt(Colors.primaries.length)];
+              Colors.primaries[Random().nextInt(Colors.primaries.length)];
           rushErrorLog = log.toString();
         }
         notifyListeners();
@@ -97,7 +99,7 @@ class RushStore extends ChangeNotifier {
 
       final appDir = await getApplicationDocumentsDirectory();
       if (_rush!.source != null) {
-        webUrl = "${appDir.path}/rushes/${_rush!.name}/index.html";
+        webUrl = "${appDir.path}/rushes/${_rushContainer.platform}/index.html";
       } else {
         webUrl = "assets/www/rush/index.html";
       }
@@ -106,11 +108,12 @@ class RushStore extends ChangeNotifier {
       _rush!.source?.forEach((item) async {
         final response = await supabase.storage
             .from("rushes")
-            .download("${_rush!.name}/$item");
+            .download("${_rushContainer.platform}/$item");
         if (response.error != null) {
           context.showSnackBar(message: response.error!.message);
         } else if (response.data != null) {
-          Directory rushDir = Directory("${appDir.path}/rushes/${_rush!.name}");
+          Directory rushDir =
+              Directory("${appDir.path}/rushes/${_rushContainer.platform}");
           if (!await rushDir.exists()) rushDir.createSync(recursive: true);
           File file = File("${rushDir.path}/$item");
           file.writeAsBytesSync(response.data!);
@@ -121,7 +124,8 @@ class RushStore extends ChangeNotifier {
     }
   }
 
-  Future<void> _fetchConfig(BuildContext context, RushContainer rushContainer) async {
+  Future<void> _fetchConfig(
+      BuildContext context, RushContainer rushContainer) async {
     try {
       var response = await supabase
           .from("configs")
@@ -151,7 +155,7 @@ class RushStore extends ChangeNotifier {
     notifyListeners();
     try {
       final config =
-      inputControllers.map((key, value) => MapEntry(key, value.text));
+          inputControllers.map((key, value) => MapEntry(key, value.text));
       config.removeWhere((key, value) => value.isEmpty);
       var response = await supabase.from("configs").upsert({
         "user": supabase.auth.currentUser!.id,
