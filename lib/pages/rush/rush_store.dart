@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:math';
 
@@ -18,7 +19,7 @@ class RushStore extends ChangeNotifier {
 
   get browser => _rush?.browser;
 
-  get webOffstage => !(_rush?.webShowKeys?.contains(runState) ?? false);
+  get showCaptcha => (_rush?.webShowKeys?.contains(runState) ?? false);
 
   late final Rusher _rusher;
   late final String webUrl;
@@ -39,6 +40,7 @@ class RushStore extends ChangeNotifier {
 
   String? rushSuccessLog;
   String? rushErrorLog;
+  List<String> successLogs = [];
   Color runStateColor = Colors.grey;
 
   RushStore(BuildContext context, rushContainer) {
@@ -54,7 +56,7 @@ class RushStore extends ChangeNotifier {
           }
         } else {
           runStateColor =
-              Colors.primaries[Random().nextInt(Colors.primaries.length)];
+          Colors.primaries[Random().nextInt(Colors.primaries.length)];
           rushErrorLog = log.toString();
         }
         notifyListeners();
@@ -113,7 +115,7 @@ class RushStore extends ChangeNotifier {
           context.showSnackBar(message: response.error!.message);
         } else if (response.data != null) {
           Directory rushDir =
-              Directory("${appDir.path}/rushes/${_rushContainer.platform}");
+          Directory("${appDir.path}/rushes/${_rushContainer.platform}");
           if (!await rushDir.exists()) rushDir.createSync(recursive: true);
           File file = File("${rushDir.path}/$item");
           file.writeAsBytesSync(response.data!);
@@ -124,13 +126,12 @@ class RushStore extends ChangeNotifier {
     }
   }
 
-  Future<void> _fetchConfig(
-      BuildContext context, RushContainer rushContainer) async {
+  Future<void> _fetchConfig(BuildContext context, RushContainer rushContainer) async {
     try {
       var response = await supabase
           .from("configs")
           .select("config")
-          .eq("user", supabase.auth.currentUser!.id)
+          .eq("user_id", supabase.auth.currentUser!.id)
           .eq("platform", rushContainer.platform)
           .eq("category", rushContainer.category)
           .execute();
@@ -155,10 +156,10 @@ class RushStore extends ChangeNotifier {
     notifyListeners();
     try {
       final config =
-          inputControllers.map((key, value) => MapEntry(key, value.text));
+      inputControllers.map((key, value) => MapEntry(key, value.text));
       config.removeWhere((key, value) => value.isEmpty);
       var response = await supabase.from("configs").upsert({
-        "user": supabase.auth.currentUser!.id,
+        "user_id": supabase.auth.currentUser!.id,
         "platform": rushContainer.platform,
         "category": rushContainer.category,
         "config": config,
@@ -177,23 +178,39 @@ class RushStore extends ChangeNotifier {
 
   final Map<String, dynamic> cache = {};
 
-  void start() {
-    _run(_rush?.steps);
+  void start(BuildContext context) async {
+    final String? successLog = await _run(context, _rush?.steps);
+    debugPrint("start - insert $successLog");
+    if (successLog != null) {
+      final response = await supabase.from("orders").insert({
+        "user_id": supabase.auth.currentUser!.id,
+        "platform": _rushContainer.platform,
+        "category": _rushContainer.category,
+        "order": successLog,
+      }).execute();
+      if (response.hasError) {
+        debugPrint(response.error.toString());
+      }
+    }
   }
 
-  void runInit() {
-    _run(_rush?.init);
+  void runInit(BuildContext context) {
+    _run(context, _rush?.init);
   }
 
-  void runAction() {
-    _run(_rush?.magic);
+  void runAction(BuildContext context) {
+    _run(context, _rush?.magic);
   }
 
-  void _run(runnerKeys) async {
-    if (runnerKeys == null) return;
-    debugPrint("$isRunning");
+  Future<String?> _run(BuildContext context, runnerKeys) async {
+    if (runnerKeys == null) return null;
     if (isRunning) {
-      stop();
+      if (rushSuccessLog != null) {
+        successLogs.add(rushSuccessLog!);
+        rushSuccessLog = null;
+        notifyListeners();
+      }
+      stop("已取消");
     } else {
       final minMs = int.tryParse(minMsController.text) ?? 0;
       final maxMs = int.tryParse(maxMsController.text) ?? 0;
@@ -214,16 +231,58 @@ class RushStore extends ChangeNotifier {
       for (String runnerKey in runnerKeys) {
         _runner = _rush!.runners[runnerKey]!;
         notifyListeners();
-        debugPrint(runnerKey);
+        if (showCaptcha) {
+          _rusher.captchaController = await _showCaptcha(context);
+        } else {
+          _rusher.captchaController = null;
+        }
         final data = await _runner.run(this, _rusher, _rush!);
-        debugPrint("$runnerKey $data");
         if (data == null) break;
       }
       if (isRunning) {
-        _runner = NothingRunner("已完成");
-        notifyListeners();
+        stop("已完成");
+        if (rushSuccessLog != null) {
+          successLogs.add(rushSuccessLog!);
+          rushSuccessLog = null;
+          notifyListeners();
+          return successLogs.last;
+        }
       }
     }
+    return null;
+  }
+
+  Future<WebController> _showCaptcha(context) async {
+    Completer<WebController> completer = Completer();
+    showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: const Text("验证码"),
+            content: SizedBox(
+              width: double.infinity,
+              child: AspectRatio(
+                aspectRatio: 320.0 / 320.0,
+                child: WebEngine(
+                  showNav: false,
+                  content: webUrl,
+                  onPageFinished: (controller, url) {
+                    completer.complete(controller);
+                  },
+                ),
+              ),
+            ),
+            actions: [
+              TextButton(
+                child: const Text("关闭"),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              ),
+            ],
+          );
+        });
+    return completer.future;
   }
 
   void putCache(Map<String, dynamic>? forCache, dynamic data) {
@@ -241,16 +300,16 @@ class RushStore extends ChangeNotifier {
     }
   }
 
-  void stop() {
+  void stop(String message) {
     _rusher.stop();
-    _runner = NothingRunner("已取消");
+    _runner = NothingRunner(message);
     runStateColor = Colors.grey;
     notifyListeners();
   }
 
   @override
   void dispose() {
-    stop();
+    stop("已取消");
     _rusher.dispose();
     for (var controller in controllers) {
       controller.dispose();

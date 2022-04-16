@@ -18,6 +18,7 @@ class Rusher {
   int? minMs;
   int? nextMs;
   WebController? controller;
+  WebController? captchaController;
   final void Function(String, bool) logger;
 
   Rusher(this.logger) {
@@ -89,14 +90,15 @@ class Rusher {
     final script = "${options["function"]}(${options["args"]})";
     try {
       dynamic response;
+      WebController? currentController = captchaController ?? controller;
       if (options["sync"] ?? false) {
-        response = await controller?.webViewController
+        response = await currentController?.webViewController
             .runJavascriptReturningResult(script);
         if (response is String) response = jsonDecode(response);
       } else {
-        controller?.completer = Completer();
-        await controller?.webViewController.runJavascript(script);
-        response = await controller?.completer!.future;
+        currentController?.completer = Completer();
+        await currentController?.webViewController.runJavascript(script);
+        response = await currentController?.completer!.future;
       }
       if (response is String) response = jsonDecode(response);
       if (_isExpected(response, options["predicate"])) {
@@ -136,6 +138,8 @@ class Rusher {
   void stop() {
     _enabled = false;
     _cancelableOperation?.cancel();
+    controller?.webViewController
+        .runJavascript("document.location.reload(true);");
   }
 
   void dispose() {

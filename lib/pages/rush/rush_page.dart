@@ -42,7 +42,7 @@ class _RushPageState extends AuthRequiredState<RushPage> {
                     ? const SizedBox.shrink()
                     : IconButton(
                         onPressed: () {
-                          store.runAction();
+                          store.runAction(context);
                         },
                         icon: const Icon(Icons.auto_fix_high),
                       ),
@@ -65,7 +65,7 @@ class _RushPageState extends AuthRequiredState<RushPage> {
                       children: <Widget>[
                         const Divider(),
                         Offstage(
-                          offstage: store.webOffstage,
+                          offstage: true,
                           child: Column(
                             children: [
                               SizedBox(
@@ -77,7 +77,7 @@ class _RushPageState extends AuthRequiredState<RushPage> {
                                     content: store.webUrl,
                                     onWebViewCreated: (controller) {
                                       store.controller = controller;
-                                      store.runInit();
+                                      store.runInit(context);
                                     },
                                   ),
                                 ),
@@ -163,6 +163,36 @@ class _RushPageState extends AuthRequiredState<RushPage> {
                           ),
                         ),
                         const Divider(),
+                        for (var item in store.successLogs)
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                    vertical: 4, horizontal: 16),
+                                child: SelectableLinkify(
+                                  onOpen: (link) async {
+                                    String url = link.url
+                                        .replaceAll(",", "")
+                                        .replaceAll("}", "");
+                                    if (await canLaunch(url)) {
+                                      await launch(url);
+                                    } else {
+                                      context.showErrorSnackBar(
+                                          message: "无法打开");
+                                    }
+                                  },
+                                  text: item,
+                                  style: const TextStyle(color: Colors.grey),
+                                  options:
+                                      const LinkifyOptions(humanize: false),
+                                  linkStyle: const TextStyle(
+                                      decoration: TextDecoration.none),
+                                ),
+                              ),
+                              const Divider(),
+                            ],
+                          ),
                       ],
                     ),
                   ),
@@ -170,7 +200,7 @@ class _RushPageState extends AuthRequiredState<RushPage> {
                 ? null
                 : FloatingActionButton(
                     onPressed: () {
-                      store.start();
+                      store.start(context);
                     },
                     child: Icon(store.isRunning
                         ? Icons.stop

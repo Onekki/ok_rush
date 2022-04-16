@@ -55,8 +55,6 @@ class Rush {
       steps: json["steps"]?.cast<String>());
 }
 
-class Web {}
-
 abstract class AbsRunner {
   AbsRunner(this.name);
 

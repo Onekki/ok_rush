@@ -30,7 +30,7 @@ class WebEngine extends StatefulWidget {
   final void Function(WebController controller)? onWebViewCreated;
   final void Function(int progress)? onProgress;
   final void Function(String url)? onPageStarted;
-  final void Function(String url)? onPageFinished;
+  final void Function(WebController controller, String url)? onPageFinished;
 
   @override
   State<StatefulWidget> createState() {
@@ -97,7 +97,7 @@ class _WebEngineState extends State<WebEngine> {
               onPageFinished: (String url) async {
                 debugPrint('Page finished loading: $url');
                 if (widget.onPageFinished != null) {
-                  widget.onPageFinished!(url);
+                  widget.onPageFinished!(_controller!, url);
                 }
               },
               backgroundColor: const Color(0x00ffffff),
