@@ -4,8 +4,6 @@ import 'package:ok_rush/pages/auth/login.dart';
 import 'package:ok_rush/pages/auth/reset_pwd.dart';
 import 'package:ok_rush/pages/home.dart';
 import 'package:ok_rush/pages/splash.dart';
-import 'package:ok_rush/pages/starark/starark.dart';
-import 'package:ok_rush/pages/starark/starark_auth.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 const kSupabaseUrl = "https://fnnugvyppqqevbygpdfe.supabase.co";
@@ -40,8 +38,6 @@ class OkRushApp extends StatelessWidget {
         '/login': (_) => const LoginPage(),
         '/home': (_) => const HomePage(),
         '/reset_pwd': (_) => const ResetPwdPage(),
-        '/starark': (_) => const StarArkPage(),
-        '/starark_auth': (_) => const StarArkAuthPage()
       },
     );
   }

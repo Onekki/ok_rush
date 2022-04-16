@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ok_rush/components/auth_required_state.dart';
-import 'package:ok_rush/pages/web/web_view.dart';
+import 'package:ok_rush/pages/rush/web_engine.dart';
 import 'package:ok_rush/utils/constants.dart';
 import 'package:webview_cookie_manager/webview_cookie_manager.dart';
 
@@ -43,8 +43,8 @@ class _BrowserPageState extends AuthRequiredState<BrowserPage> {
         ),
         body: Stack(
           children: [
-            WebViewWidget(
-              url: widget.webUrl,
+            WebEngine(
+              content: widget.webUrl,
               onPageStarted: (url) {
                 context.showSnackBar(message: url);
               },
