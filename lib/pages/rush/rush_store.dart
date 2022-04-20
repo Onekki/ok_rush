@@ -8,6 +8,7 @@ import 'package:ok_rush/pages/rush/rusher.dart';
 import 'package:ok_rush/pages/rush/web_engine.dart';
 import 'package:ok_rush/utils/constants.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:wakelock/wakelock.dart';
 
 class RushStore extends ChangeNotifier {
   late final RushContainer _rushContainer;
@@ -205,6 +206,7 @@ class RushStore extends ChangeNotifier {
   Future<String?> _run(BuildContext context, runnerKeys) async {
     if (runnerKeys == null) return null;
     if (isRunning) {
+      Wakelock.disable();
       if (rushSuccessLog != null) {
         successLogs.add(rushSuccessLog!);
         rushSuccessLog = null;
@@ -212,6 +214,7 @@ class RushStore extends ChangeNotifier {
       }
       stop("已取消");
     } else {
+      Wakelock.enable();
       final minMs = int.tryParse(minMsController.text) ?? 0;
       final maxMs = int.tryParse(maxMsController.text) ?? 0;
       _rusher.start(minMs, maxMs, controller);
