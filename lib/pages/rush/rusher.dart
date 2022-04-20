@@ -55,7 +55,8 @@ class Rusher {
               headers: options["headers"],
               responseType: ResponseType.plain));
       if (response.statusCode == 200) {
-        Map<String, dynamic> data = jsonDecode(response.data);
+        dynamic data = jsonDecode(response.data);
+        if (data is String) data = jsonDecode(data);
         if (_isExpected(data, options["predicate"])) {
           logger(data.toString(), true);
           return data;
