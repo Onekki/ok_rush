@@ -257,32 +257,15 @@ class RushStore extends ChangeNotifier {
 
   Future<WebController> _showCaptcha(context) async {
     Completer<WebController> completer = Completer();
-    showDialog(
+    showModalBottomSheet(
         context: context,
         builder: (context) {
-          return AlertDialog(
-            title: const Text("验证码"),
-            content: SizedBox(
-              width: double.infinity,
-              child: AspectRatio(
-                aspectRatio: 320.0 / 320.0,
-                child: WebEngine(
-                  showNav: false,
-                  content: webUrl,
-                  onPageFinished: (controller, url) {
-                    completer.complete(controller);
-                  },
-                ),
-              ),
-            ),
-            actions: [
-              TextButton(
-                child: const Text("关闭"),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-              ),
-            ],
+          return WebEngine(
+            showNav: false,
+            content: webUrl,
+            onPageFinished: (controller, url) {
+              completer.complete(controller);
+            },
           );
         });
     return completer.future;
