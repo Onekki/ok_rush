@@ -3,7 +3,6 @@ import 'package:ok_rush/components/auth_required_state.dart';
 import 'package:ok_rush/pages/rush/rush.dart';
 import 'package:ok_rush/pages/rush/rush_page.dart';
 import 'package:ok_rush/utils/constants.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -13,17 +12,19 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends AuthRequiredState<HomePage> {
-  final List<RushContainer> _rushContainers = [];
+  final List<String> _platforms = [];
+  final Map<String, List<RushContainer>> _rushContainers = {};
 
   bool _isLoading = false;
   String? _currentUserEmail;
   String? _currentUserAvatarSrc;
 
   @override
-  void onAuthenticated(Session session) {
-    final user = session.user;
+  void initState() {
+    super.initState();
+    final user = supabase.auth.currentUser;
     if (user != null) {
-      _currentUserEmail = session.user!.email;
+      _currentUserEmail = supabase.auth.currentUser!.email;
       final qq = _currentUserEmail!.split("@")[0];
       if (_currentUserEmail!.endsWith("@qq.com")) {
         _currentUserAvatarSrc = "http://q1.qlogo.cn/g?b=qq&nk=$qq&s=100";
@@ -41,10 +42,15 @@ class _HomePageState extends AuthRequiredState<HomePage> {
     if (response.error != null) {
       context.showErrorSnackBar(message: response.error!.message);
     } else {
+      _platforms.clear();
       _rushContainers.clear();
       response.data.forEach((item) {
         final container = RushContainer.jsonDecode(item);
-        _rushContainers.add(container);
+        if (!_platforms.contains(container.platform)) {
+          _platforms.add(container.platform);
+          _rushContainers.putIfAbsent(container.platform, () => []);
+        }
+        _rushContainers[container.platform]?.add(container);
       });
     }
     setState(() {
@@ -64,6 +70,11 @@ class _HomePageState extends AuthRequiredState<HomePage> {
                 Navigator.of(context).pushNamed('/reset_pwd');
               },
               icon: const Icon(Icons.admin_panel_settings)),
+          IconButton(
+              onPressed: () {
+                _fetchRushes();
+              },
+              icon: const Icon(Icons.refresh)),
         ],
       ),
       body: _currentUserEmail != null
@@ -86,27 +97,64 @@ class _HomePageState extends AuthRequiredState<HomePage> {
                           child: CircularProgressIndicator(),
                         )
                       : ListView.builder(
-                          itemCount: _rushContainers.length,
+                    itemCount: _platforms.length,
                           itemBuilder: (context, index) {
-                            final item = _rushContainers[index];
-                            return Align(
-                              child: ElevatedButton(
-                                onPressed: () {
-                                  Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                          builder: (context) =>
-                                              RushPage(rushContainer: item)));
-                                },
-                                // textColor: Colors.white,
-                                child:
-                                    Text("${item.platform}:${item.category}"),
-                                style: ButtonStyle(
-                                    shape: MaterialStateProperty.all(
-                                        RoundedRectangleBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(24.0)))),
-                              ),
+                            final item = _platforms[index];
+                            return Column(
+                              children: [
+                                Padding(
+                                  padding: const EdgeInsets.only(
+                                      left: 8, right: 8, top: 16, bottom: 4),
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                        color: Colors.red.withAlpha(50),
+                                        borderRadius: BorderRadius.circular(4)),
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(2),
+                                      child: Text(
+                                        item,
+                                        style: const TextStyle(fontSize: 12),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                Padding(
+                                  padding:
+                                      const EdgeInsets.symmetric(horizontal: 8),
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 4),
+                                    child: Wrap(
+                                      spacing: 8,
+                                      runSpacing: 4,
+                                      children: [
+                                        for (var rushContainer
+                                            in _rushContainers[item]!)
+                                          ElevatedButton(
+                                            onPressed: () {
+                                              Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                      builder: (context) =>
+                                                          RushPage(
+                                                              rushContainer:
+                                                                  rushContainer)));
+                                            },
+                                            // textColor: Colors.white,
+                                            child: Text(rushContainer.category),
+                                            style: ButtonStyle(
+                                                shape: MaterialStateProperty
+                                                    .all(RoundedRectangleBorder(
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(
+                                                                    24.0)))),
+                                          ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
                             );
                           },
                         ),
