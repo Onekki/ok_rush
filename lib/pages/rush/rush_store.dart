@@ -32,6 +32,7 @@ class RushStore extends ChangeNotifier {
   get isLoading => _runner is LoadingRunner;
 
   get runState => _runner.name;
+  Color runStateColor = Colors.grey;
 
   final Map<String, TextEditingController> inputControllers = {};
   final TextEditingController minMsController = TextEditingController();
@@ -39,26 +40,24 @@ class RushStore extends ChangeNotifier {
   final List<TextEditingController> controllers = [];
   final List<String> controllerLabels = [];
 
-  String? rushSuccessLog;
-  String? rushErrorLog;
-  List<String> successLogs = [];
-  Color runStateColor = Colors.grey;
+  List<String> currentLogs = [];
+  int currentDelayMs = 0;
+  List<String> historyLogs = [];
+  List<Color> historyColors = [];
+  Color currentLogColor = Colors.grey;
 
   RushStore(BuildContext context, rushContainer) {
     _rushContainer = rushContainer;
-    _rusher = Rusher((String log, bool isExpected) {
+    _rusher = Rusher((int delayMs, String log, bool isExpected) {
       debugPrint(log.toString());
       if (isRunning) {
-        if (isExpected) {
-          if (rushSuccessLog != null) {
-            rushSuccessLog = "$log\n\n$rushSuccessLog";
-          } else {
-            rushSuccessLog = log;
-          }
-        } else {
-          runStateColor =
-          Colors.primaries[Random().nextInt(Colors.primaries.length)];
-          rushErrorLog = log.toString();
+        if (currentLogs.isEmpty || currentLogs.first != log) {
+          currentLogs.insert(0, log);
+        }
+        if (!isExpected) {
+          currentDelayMs = delayMs;
+          currentLogColor =
+              Colors.primaries[Random().nextInt(Colors.primaries.length)];
         }
         notifyListeners();
       }
@@ -179,8 +178,8 @@ class RushStore extends ChangeNotifier {
 
   final Map<String, dynamic> cache = {};
 
-  void start(BuildContext context) async {
-    final String? successLog = await _run(context, _rush?.steps);
+  void runStep(BuildContext context) async {
+    final String? successLog = await _run(context, _rush?.steps, true);
     debugPrint("start - insert $successLog");
     if (successLog != null) {
       final response = await supabase.from("orders").insert({
@@ -196,22 +195,26 @@ class RushStore extends ChangeNotifier {
   }
 
   void runInit(BuildContext context) {
-    _run(context, _rush?.init);
+    _run(context, _rush?.init, false);
   }
 
-  void runAction(BuildContext context) {
-    _run(context, _rush?.magic);
+  void runMagic(BuildContext context) {
+    _run(context, _rush?.magic, false);
   }
 
-  Future<String?> _run(BuildContext context, runnerKeys) async {
+  Future<String?> _run(BuildContext context, runnerKeys, isRun) async {
     if (runnerKeys == null) return null;
+    runStateColor = Colors.grey;
     if (isRunning) {
       Wakelock.disable();
-      if (rushSuccessLog != null) {
-        successLogs.add(rushSuccessLog!);
-        rushSuccessLog = null;
+      if (currentLogs.isNotEmpty) {
+        historyLogs.insert(0, currentLogs.join("\n\n"));
+        currentLogs.clear();
+        currentDelayMs = 0;
+        historyColors.insert(0, Colors.red);
         notifyListeners();
       }
+      runStateColor = Colors.red;
       stop("已取消");
     } else {
       Wakelock.enable();
@@ -243,12 +246,15 @@ class RushStore extends ChangeNotifier {
         if (data == null) break;
       }
       if (isRunning) {
+        runStateColor = Colors.green;
         stop("已完成");
-        if (rushSuccessLog != null) {
-          successLogs.add(rushSuccessLog!);
-          rushSuccessLog = null;
+        if (currentLogs.isNotEmpty) {
+          historyLogs.insert(0, currentLogs.join("\n\n"));
+          currentLogs.clear();
+          currentDelayMs = 0;
+          historyColors.insert(0, isRun ? Colors.green : Colors.grey);
           notifyListeners();
-          return successLogs.last;
+          return historyLogs.first;
         }
       }
     }
@@ -289,7 +295,13 @@ class RushStore extends ChangeNotifier {
   void stop(String message) {
     _rusher.stop();
     _runner = NothingRunner(message);
-    runStateColor = Colors.grey;
+    currentLogColor = Colors.grey;
+    notifyListeners();
+  }
+
+  void clear() {
+    historyLogs.clear();
+    historyColors.clear();
     notifyListeners();
   }
 

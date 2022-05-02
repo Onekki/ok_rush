@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_linkify/flutter_linkify.dart';
 import 'package:ok_rush/components/auth_required_state.dart';
+import 'package:ok_rush/components/resizable_box.dart';
 import 'package:ok_rush/pages/rush/browser_page.dart';
 import 'package:ok_rush/pages/rush/rush.dart';
 import 'package:ok_rush/pages/rush/rush_store.dart';
@@ -42,7 +43,7 @@ class _RushPageState extends AuthRequiredState<RushPage> {
                     ? const SizedBox.shrink()
                     : IconButton(
                         onPressed: () {
-                          store.runAction(context);
+                          store.runMagic(context);
                         },
                         icon: const Icon(Icons.auto_fix_high),
                       ),
@@ -59,153 +60,209 @@ class _RushPageState extends AuthRequiredState<RushPage> {
                 ? const Center(
                     child: CircularProgressIndicator(),
                   )
-                : SingleChildScrollView(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: <Widget>[
-                        const Divider(),
-                        Offstage(
-                          offstage: true,
-                          child: Column(
-                            children: [
-                              SizedBox(
-                                width: double.infinity,
-                                child: AspectRatio(
-                                  aspectRatio: 320.0 / 320.0,
-                                  child: WebEngine(
-                                    showNav: false,
-                                    content: store.webUrl,
-                                    onWebViewCreated: (controller) {
-                                      store.controller = controller;
-                                      store.runInit(context);
-                                    },
-                                  ),
-                                ),
-                              ),
-                              const Divider(),
-                            ],
+                : Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Divider(),
+                      Offstage(
+                        offstage: true,
+                        child: AspectRatio(
+                          aspectRatio: 1,
+                          child: WebEngine(
+                            showNav: false,
+                            content: store.webUrl,
+                            onWebViewCreated: (controller) {
+                              store.controller = controller;
+                              store.runInit(context);
+                            },
                           ),
                         ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        child: Row(
+                          children: [
+                            const Text(
+                              "运行状态",
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            const Spacer(),
+                            Text(
+                              store.runState,
+                              style: TextStyle(color: store.runStateColor),
+                            ),
+                            store.isRunning
+                                ? const Padding(
+                                    padding: EdgeInsets.only(left: 8),
+                                    child: SizedBox(
+                                      width: 16,
+                                      height: 16,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
+                                    ),
+                                  )
+                                : const SizedBox.shrink()
+                          ],
+                        ),
+                      ),
+                      const Divider(),
+                      if (store.currentLogs.isNotEmpty)
                         Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
                           child: Row(
                             children: [
                               const Text(
-                                "运行状态",
+                                "当前日志",
                                 style: TextStyle(fontWeight: FontWeight.bold),
                               ),
                               const Spacer(),
-                              Text(store.runState),
-                              store.isRunning
-                                  ? const Padding(
-                                      padding: EdgeInsets.only(left: 8),
-                                      child: SizedBox(
-                                        width: 16,
-                                        height: 16,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                        ),
-                                      ),
-                                    )
-                                  : const SizedBox.shrink()
+                              Text(
+                                "${store.currentDelayMs}",
+                                style: TextStyle(
+                                    fontSize: 12, color: store.currentLogColor),
+                              ),
                             ],
                           ),
                         ),
-                        const Divider(),
-                        const Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 16),
-                          child: Text(
-                            "失败日志:",
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                        SizedBox(
-                          width: double.infinity,
-                          height: 64,
+                      if (store.currentLogs.isNotEmpty)
+                        ResizableBox(
+                          maxHeight: MediaQuery.of(context).size.width,
                           child: SingleChildScrollView(
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                  vertical: 4, horizontal: 16),
-                              child: Text(
-                                store.rushErrorLog ?? "暂无日志",
-                                style: TextStyle(color: store.runStateColor),
-                              ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                for (var item in store.currentLogs)
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 4, horizontal: 8),
+                                    child: item != store.currentLogs.first
+                                        ? Text(item)
+                                        : Text(item,
+                                            style: TextStyle(
+                                                color: store.currentLogColor)),
+                                  ),
+                              ],
                             ),
                           ),
                         ),
-                        const Divider(),
-                        const Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 16),
-                          child: Text(
-                            "成功日志:",
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        child: Row(
+                          children: [
+                            const Text(
+                              "历史日志",
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            const Spacer(),
+                            GestureDetector(
+                              onTap: () {
+                                store.clear();
+                              },
+                              child: const Icon(Icons.clear_all),
+                            )
+                          ],
                         ),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(
-                              vertical: 4, horizontal: 16),
-                          child: SelectableLinkify(
-                            onOpen: (link) async {
-                              String url = link.url
-                                  .replaceAll(",", "")
-                                  .replaceAll("}", "");
-                              if (await canLaunch(url)) {
-                                await launch(url);
-                              } else {
-                                context.showErrorSnackBar(message: "无法打开");
-                              }
-                            },
-                            text: store.rushSuccessLog ?? "暂无日志",
-                            style: const TextStyle(color: Colors.grey),
-                            options: const LinkifyOptions(humanize: false),
-                            linkStyle: const TextStyle(
-                                decoration: TextDecoration.none),
-                          ),
-                        ),
-                        const Divider(),
-                        for (var item in store.successLogs)
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Padding(
-                                padding: const EdgeInsets.symmetric(
-                                    vertical: 4, horizontal: 16),
-                                child: SelectableLinkify(
-                                  onOpen: (link) async {
-                                    String url = link.url
-                                        .replaceAll(",", "")
-                                        .replaceAll("}", "");
-                                    if (await canLaunch(url)) {
-                                      await launch(url);
-                                    } else {
-                                      context.showErrorSnackBar(
-                                          message: "无法打开");
-                                    }
-                                  },
-                                  text: item,
-                                  style: const TextStyle(color: Colors.grey),
-                                  options:
-                                      const LinkifyOptions(humanize: false),
-                                  linkStyle: const TextStyle(
-                                      decoration: TextDecoration.none),
-                                ),
+                      ),
+                      store.historyLogs.isEmpty
+                          ? const Expanded(
+                              child: Center(
+                              child: Text("暂无日志"),
+                            ))
+                          : Expanded(
+                              child: SingleChildScrollView(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: <Widget>[
+                                  for (var i = 0;
+                                      i < store.historyLogs.length;
+                                      i++)
+                                    Stack(
+                                      children: [
+                                        Padding(
+                                          padding: const EdgeInsets.all(8),
+                                          child: Container(
+                                            width: MediaQuery.of(context)
+                                                .size
+                                                .width,
+                                            decoration: BoxDecoration(
+                                                border: Border.all(
+                                                    color:
+                                                        store.historyColors[i],
+                                                    width: 1)),
+                                            child: Padding(
+                                              padding: const EdgeInsets.all(8),
+                                              child: SelectableLinkify(
+                                                onOpen: (link) async {
+                                                  String url = link.url
+                                                      .replaceAll(",", "")
+                                                      .replaceAll("}", "");
+                                                  if (await canLaunch(url)) {
+                                                    await launch(url);
+                                                  } else {
+                                                    context.showErrorSnackBar(
+                                                        message: "无法打开");
+                                                  }
+                                                },
+                                                text: store.historyLogs[i],
+                                                style: const TextStyle(
+                                                    color: Colors.grey),
+                                                options: const LinkifyOptions(
+                                                    humanize: false),
+                                                linkStyle: const TextStyle(
+                                                    decoration:
+                                                        TextDecoration.none),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        Row(
+                                          children: [
+                                            const Spacer(),
+                                            Padding(
+                                              padding: const EdgeInsets.all(8),
+                                              child: Container(
+                                                decoration: BoxDecoration(
+                                                  color: store.historyColors[i]
+                                                      .withAlpha(40),
+                                                  borderRadius:
+                                                      const BorderRadius.only(
+                                                          bottomLeft:
+                                                              Radius.circular(
+                                                                  4)),
+                                                ),
+                                                child: Padding(
+                                                  padding:
+                                                      const EdgeInsets.all(4),
+                                                  child: Text(
+                                                    "$i",
+                                                    style: TextStyle(
+                                                        fontSize: 12,
+                                                        color: store
+                                                            .historyColors[i]),
+                                                  ),
+                                                ),
+                                              ),
+                                            )
+                                          ],
+                                        )
+                                      ],
+                                    ),
+                                ],
                               ),
-                              const Divider(),
-                            ],
-                          ),
-                      ],
-                    ),
+                            ))
+                    ],
                   ),
             floatingActionButton: store.isLoading
                 ? null
                 : FloatingActionButton(
-                    onPressed: () {
-                      store.start(context);
-                    },
-                    child: Icon(store.isRunning
-                        ? Icons.stop
-                        : Icons.play_arrow_rounded),
-                  ), // This trailing comma makes auto-formatting nicer for build methods.
+              onPressed: () {
+                store.runStep(context);
+              },
+              child: Icon(store.isRunning
+                  ? Icons.stop
+                  : Icons.play_arrow_rounded),
+            ),
           );
         },
       ),

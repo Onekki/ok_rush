@@ -19,7 +19,7 @@ class Rusher {
   int? nextMs;
   WebController? controller;
   WebController? captchaController;
-  final void Function(String, bool) logger;
+  final void Function(int, String, bool) logger;
 
   Rusher(this.logger) {
     _dio.interceptors.add(DioLoggingInterceptor(
@@ -58,18 +58,18 @@ class Rusher {
         dynamic data = jsonDecode(response.data);
         if (data is String) data = jsonDecode(data);
         if (_isExpected(data, options["predicate"])) {
-          logger(data.toString(), true);
+          logger(delayMs, data.toString(), true);
           return data;
         } else {
-          logger("$delayMs - ${data.toString()}", false);
+          logger(delayMs, data.toString(), false);
         }
       } else {
-        logger("$delayMs - ${response.statusCode}", false);
+        logger(delayMs, response.statusCode.toString(), false);
       }
     } on DioError catch (e) {
-      logger("$delayMs - ${e.message}", false);
+      logger(delayMs, e.message, false);
     } catch (e) {
-      logger("$delayMs - $e", false);
+      logger(delayMs, e.toString(), false);
     }
     if (delayMs > 0) {
       if (!_enabled) return null;
@@ -103,12 +103,12 @@ class Rusher {
       }
       if (response is String) response = jsonDecode(response);
       if (_isExpected(response, options["predicate"])) {
-        logger(response.toString(), true);
+        logger(delayMillis, response.toString(), true);
         return response;
       }
-      logger("$delayMillis - $response", false);
+      logger(delayMillis, response.toString(), false);
     } catch (e) {
-      logger("$delayMillis - ${e.toString()}", false);
+      logger(delayMillis, e.toString(), false);
     }
     if (delayMillis > 0) {
       if (!_enabled) return null;
